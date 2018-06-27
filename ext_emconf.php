@@ -17,7 +17,7 @@ $EM_CONF[$_EXTKEY] = [
 this extension is very useful. It\'s simple and easy to configure',
 	'category' => 'plugin',
 	'shy' => 0,
-	'version' => '0.3.0-dev',
+	'version' => '0.3.0',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',

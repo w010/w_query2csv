@@ -259,19 +259,6 @@ A:
 
 7. ChangeLog
 
-0.1.1
-	First release with full documentation.
-
-0.1.5
-	Last built query is saved and available on debug
-	Quotes in input are escaped to csv-compatible double quotes (was messing whole csv)
-	Additional tables added to not_allowed_tables
-
-0.2.0
-	Code reworked and compatible with TYPO3 version 7.x and 8.x
-	Userfunc field processing
-	Many minor improvements – some of them breaks compatibility. Please refer to Migration section, if updating
-
 0.3.0
 	Charset converting - iconv changed to mbstring (thanks to Henri Nathanson for suggestion)
 	Inactive records filtering changed to native - now use enableFields = 1 for this. use default_enableColumns only when table isn't in TCA
@@ -279,3 +266,17 @@ A:
 	Debugging now works automatically when TYPO3_CONTEXT == Development, no need to set debug_allowed = 1
 	Process->unserialize now can use custom delimiter
 	New processors: ->tableLabelsFromRecordsCommalist, ->tableLabelsFromMmRelations
+
+0.2.0
+	Code reworked and compatible with TYPO3 version 7.x and 8.x
+	Userfunc field processing
+	Many minor improvements – some of them breaks compatibility. Please refer to Migration section, if updating
+
+0.1.5
+	Last built query is saved and available on debug
+	Quotes in input are escaped to csv-compatible double quotes (was messing whole csv)
+	Additional tables added to not_allowed_tables
+
+0.1.1
+	First release with full documentation.
+
