@@ -1,0 +1,3 @@
+- add some functions from 99.0.1.5
+- integrate sql templates / merge with that mod version
+- convert and merge readme + sxw docs into new documentation format
