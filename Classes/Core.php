@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2017 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -109,23 +109,26 @@ class Core	{
         $input = $this->config['input.'];
         $output = $this->config['output.'];
 
-        $counter = 0;               // row counter, used mainly for header
+        $counter = 0;
+	    $csv = '';
+	    $csv_header = '';
+	    $fieldNames = [];
+	    $rowBuffer = [];
 
         // set default values for not given options
-        if (!$input['fields'])      $input['fields'] = '*';
-        if (!isset($input['enable_fields']))   $input['enable_fields'] = 1;
-        if (!$output['separator'])  $output['separator'] = ',';
+        if (!isset($input['fields']))           $input['fields'] = '*';
+        if (!isset($input['enable_fields']))    $input['enable_fields'] = 1;
+        if (!isset($output['separator']))       $output['separator'] = ',';
+        if (!isset($output['quote']))           $output['quote'] = '"';
 
 
         // database read
-        $res = $this->_readData($input);
+        $preparedStatement = $this->_readData($input);
 
-	    $csv_header = '';
-	    $csv = '';
 
         // main iteration
-        if ($res)   {
-            while($row_db = $this->getDatabaseConnection()->sql_fetch_assoc($res))   {
+        if ($preparedStatement)   {
+            while(($row_db = $preparedStatement->fetch()) !== FALSE)   {
 
 	            // make sure that $fields array is empty and ready for new row data
 	            $fields = [];
@@ -137,75 +140,131 @@ class Core	{
 		            $row_db = array_merge($row_db, array_flip($add_fields));
 	            }
 
-
-                // in first row make header from db field names
-                if (!$counter && !$output['no_header_row'])  {
+                // in first iteration row from db get field names
+                if (!$counter)  {
                     $fieldNames = array_keys($row_db);
-
-                    // remove fields
-					if (count($remove_fields)) {
-                        $fieldNames = array_flip($fieldNames);
-                        foreach($remove_fields as $field){
-                            if(isset($fieldNames[$field])){
-                                unset($fieldNames[$field]);
-                            }
-                        }
-                        $fieldNames = array_flip($fieldNames);
-                    }
-
-                    // set header fields
-                    foreach($fieldNames as $field => $value)  {
-                        $fieldNames[$field] = '"'.$value.'"';
-                    }
-
-                    $csv_header = implode($output['separator'], $fieldNames);
                 }
 
 
-                // build csv row from each db field
+                // build output row from each db field
                 foreach($row_db as $field => $value)  {
                     // process field with userfunction
                     if ($process_method = $output['process_fields.'][$field])    {
+                    	// process method configured in typoscript
 	                    $params = [
 	                    	'value' => $value,
 		                    'row' => $row_db,
 		                    'conf' => $output['process_fields.'][$field.'.'],
 		                    'fieldName' => $field
 	                    ];
-                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this, '');
+	                    if (!strstr($process_method, '->')) {
+		                    // method not specified
+		                    $process_method .= '->run';
+	                    }
+                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this, '', 2);  // 2: allow exception on error, instead of only debug log
+                    } else if (strstr($value, 'USER_FUNC')) {
+                        // process method taken from sql value (in most cases set in query template)
+                        // imho we can get the same result using ts add_fields and process_fields, but maybe sometimes it's more handy to do it from sql file
+	                    $tmp = GeneralUtility::trimExplode(':', $value);
+	                    $userFuncDef = $tmp[1];
+	                    $userFuncParams = [
+		                    'fieldName' => $field,
+		                    'row' => $row_db,
+		                    'value' => $value,  // pass value containing userfunc name, we could pass params there this way
+		                    'INFO' => '\'field\' and \'data\' keys are for compatibility only, use \'fieldName\' and \'row\' instead!',
+		                    'field' => $field,  // deprecated, used in q3i projects
+		                    'data' => $row_db   // deprecated, used in q3i projects
+	                    ];
+	                    $value = GeneralUtility::callUserFunction($userFuncDef, $userFuncParams, $this);
                     }
 
-
-                    // apply htmlspecialchars
-                    if ($output['hsc'])  {
-                        $value = htmlspecialchars($value);
-                    }
-
-                    // make quotes csv-compatible double quotes (if not hsc-ed already...)
-                    $value = str_replace('"', '""', $value);
-
-                    // build fields array
-                    $fields[$field] = '"'.$value.'"';
+                    $fields[$field] = $value;
                 }
 
 
+	            // postprocess single row of data
+	            if (is_array($output['postprocessors_row.'])) {
+		            foreach ($output['postprocessors_row.'] as $key => $config) {
+			            $userFuncDef = $config['class'];
+			            if (!strstr($userFuncDef, '->')) {
+				            // method not specified
+				            $userFuncDef .= '->process';
+			            }
+			            $userFuncParams = [
+				            'config' => $config,
+				            'data' => $fields
+			            ];
+			            $fields = GeneralUtility::callUserFunction($userFuncDef, $userFuncParams, $this);
+		            }
+	            }
+
+	            // wrap all values by string delimiter
+	            foreach ($fields as $fieldKey => $fieldValue) {
+
+					// apply htmlspecialchars
+					if ($output['htmlspecialchars'] || $output['hsc'])  {
+						$fieldValue = htmlspecialchars($fieldValue);
+					}
+
+					 // if set, linebreaks are removed (changed to space) from value
+		            if ($output['strip_linebreaks'] || $output['nbr'])  {
+			            $fieldValue = preg_replace("/\r|\n/s", " ", $fieldValue);
+		            }
+
+                	// make quotes csv-compatible double quotes (if not hsc-ed already...)
+                	$fieldValue = str_replace($output['quote'], $output['quote'].$output['quote'], $fieldValue);
+
+		            // wrap value in string delimiter
+		            $fields[$fieldKey] = $output['quote'] . $fieldValue . $output['quote'];
+
+		            // add a header field name if not already present
+		            if (!in_array($fieldKey, $fieldNames)) {
+			            $fieldNames[] = $fieldKey;
+		            }
+				}
+
+                // if configured fieldnames to remove (like read only for processing use, but not needed in output file)
 	            if (count($remove_fields)) {
                     foreach($remove_fields as $field){
+	                    $fieldNames = array_flip($fieldNames);
                         if(isset($fields[$field])){
                             unset($fields[$field]);
+                            unset($fieldNames[$field]);
                         }
+	                    $fieldNames = array_flip($fieldNames);
                     }
                 }
 
                 // make csv row
-                $csv .= implode($output['separator'], $fields) . "\r\n";
+                //$csv .= implode($output['separator'], $fields) . "\r\n";
+
+                // q3i way: add csv row to buffer. what is the advantage to have this in array before build csv row?
+	            $rowBuffer[] = $fields;
+                $counter++;
             }
 
-            $counter++;
+	        // free prepared statement resources
+	        $preparedStatement->free();
         }
 
+	    if (!$output['no_header_row']) {
+		    //$csv_header = implode($output['separator'], $fieldNames) . "\r\n";
+		    $csv_header = $output['quote']
+			    . implode($output['quote'] . $output['separator'] . $output['quote'], $fieldNames)
+			    . $output['quote'] . "\n";
+	    }
+
+		// normalize rows (todo: describe what for is this exactly)
+	    foreach ($rowBuffer as $row) {
+		    $normalizedRow = [];
+		    foreach ($fieldNames as $fieldName) {
+			    $normalizedRow[$fieldName] = $row[$fieldName];
+		    }
+		    $csv .= implode($output['separator'], $normalizedRow) . "\n";
+	    }
+
         // merge header with rest of csv content
-        $csv = $csv_header . "\r\n" . $csv;
+        $csv = $csv_header . $csv;
 
         // convert charset, if needed
         if ($output['charset'])   {
@@ -225,12 +284,30 @@ class Core	{
     */
     private function _readData($input)    {
         $this->getDatabaseConnection()->store_lastBuiltQuery = true;
-        if ($input['where_wrap.'])
-	        $input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
-        $res = $this->getDatabaseConnection()->exec_SELECTquery(
-                $input['fields'],
-                $input['table'],
-                $input['where'] . ($input['default_enableColumns']
+
+        if ($input['sql_file']) {
+            // File based query (sql template)
+            if (is_file($input['sql_file'])) {
+                $fileContent = file_get_contents($input['sql_file']);
+                if ($input['sql_markers.']) {
+                    foreach ($input['sql_markers.'] as $key => $val) {
+                        $fileContent = str_replace("###{$key}###", $val, $fileContent);
+                    }
+                }
+            } else {
+                die ("<b>Fatal error:</b> Given file {$input['sql_file']} does not exist or is not readable.");
+            }
+	        $preparedStatement = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\PreparedStatement::class, $fileContent, '', []);
+	        $preparedStatement->execute();
+
+        } else {
+        	// standard-typoscript build sql query
+        	if ($input['where_wrap.'])
+	        	$input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
+        	$preparedStatement = $this->getDatabaseConnection()->prepare_SELECTquery(
+                	$input['fields'],
+                	$input['table'],
+                	$input['where'] . ($input['default_enableColumns']
                         ? ' AND NOT deleted AND NOT hidden'
                         : $input['enableFields']
                                 ? $this->cObj->enableFields($input['table'])
@@ -238,10 +315,12 @@ class Core	{
                 $input['group'],
                 $input['order'],
                 $input['limit']
-        );
+        	);
+        	$preparedStatement->execute();
+        }
 
         $this->lastQuery = $this->getDatabaseConnection()->debug_lastBuiltQuery;
-        return $res;
+        return $preparedStatement;
     }
 
     /**

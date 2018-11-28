@@ -41,162 +41,81 @@ class Process	{
 	/**
 	 * Format date timestamp
 	 *
+	 * @deprecated Use \WoloPl\WQuery2csv\Process\ParseDate
 	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
 	 * @param Core $pObj
 	 * @return string - parsed date
 	 */
 	public function parseDate($params, Core &$pObj)    {
-		if (!$params['conf']['format'])
-			$params['conf']['format'] = 'Y.m.d H:i';
-		return date($params['conf']['format'], intval($params['value']));
+		GeneralUtility::logDeprecatedFunction();
+		return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\ParseDate::class)->run($params, $pObj);
 	}
 
 	/**
 	 * Unserialize value
-     * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- (default) or -SPACE-
-     * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
 	 *
+	 * @deprecated Use \WoloPl\WQuery2csv\Process\Unserialize
 	 * @param array $params: 'value' - serialized string, 'conf' array with 'delimiter'
 	 * @param Core $pObj
 	 * @return string
 	 */
 	public function unserialize($params, Core &$pObj)    {
-
-        $lineBreak = $this->getLineBreak($params['conf']['lineBreakType']);
-
-		if (!$params['conf']['delimiter'])
-			$params['conf']['delimiter'] = '-LINEBREAK-';
-
-        $params['conf']['delimiter'] = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $params['conf']['delimiter']);
-
-        $array = unserialize($params['value']);
-	    $out = '';
-        foreach (is_array($array) ? $array : [] as $key => $val)	{
-        	$out .= "$key: $val" . $params['conf']['delimiter'];
-		}
-        return $out;
+		GeneralUtility::logDeprecatedFunction();
+		return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\Unserialize::class)->run($params, $pObj);
     }
 
 	/**
 	 * Replace with predefined value from given map array. If not found, return original
 	 *
+	 * @deprecated Use \WoloPl\WQuery2csv\Process\ValueMap
 	 * @param $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
 	 * @param Core $pObj
 	 * @return string
 	 */
     public function valueMap($params, Core &$pObj) {
-	    if (!$params['conf']['map.'])
-		    $params['conf']['map.'] = [];
-	    if ($params['conf']['map.'][ $params['value'] ])
-	    	return $params['conf']['map.'][ $params['value'] ];
-	    return $params['value'];
+	    GeneralUtility::logDeprecatedFunction();
+	    return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\ValueMap::class)->run($params, $pObj);
     }
 
 	/**
 	 * Set static value given in 'value' key of params array
 	 *
+	 * @deprecated Use \WoloPl\WQuery2csv\Process\StaticValue
 	 * @param $params: string 'value', array 'conf', array 'row', string 'fieldname'
 	 * @param Core $pObj
 	 * @return string
 	 */
 	public function staticValue($params, Core &$pObj) {
-		return $params['conf']['value'];
+		GeneralUtility::logDeprecatedFunction();
+		return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\StaticValue::class)->run($params, $pObj);
 	}
 
 	/**
 	 * Generate string with label values from uid-commalist of records, like titles of referenced items
-	 * params[conf][table] - table name
-	 * params[conf][field] - field to take the label from
-	 * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- or -SPACE-. default is comma+space (,-SPACE-)
-	 * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
 	 *
+	 * @deprecated Use \WoloPl\WQuery2csv\Process\LabelsFromRecords
 	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
 	 * @param Core $pObj
 	 * @return string
 	 */
 	public function tableLabelsFromRecordsCommalist($params, Core &$pObj)    {
-
-		if (!$params['conf']['table']  ||  !$params['conf']['field'])
-			return __METHOD__ . '() - NO TABLE OR FIELD SPECIFIED!';
-
-		$lineBreak = $this->getLineBreak($params['conf']['lineBreakType']);
-
-		if (!$params['conf']['delimiter'])
-			$params['conf']['delimiter'] = ',-SPACE-';
-
-		$params['conf']['delimiter'] = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $params['conf']['delimiter']);
-
-		$labels = [];
-
-		$res = $pObj->getDatabaseConnection()->exec_SELECTquery(
-			$params['conf']['field'],
-			$params['conf']['table'],
-			'uid IN ('.$pObj->getDatabaseConnection()->cleanIntList($params['value']).')'
-		);
-		while($row = $pObj->getDatabaseConnection()->sql_fetch_assoc($res))   {
-			$labels[] = $row[ $params['conf']['field'] ];
-		}
-
-		$value = implode($params['conf']['delimiter'], $labels);
-
-		return $value;
+		GeneralUtility::logDeprecatedFunction();
+		return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\LabelsFromRecords::class)->run($params, $pObj);
 	}
 
     /**
      * Generate string with label values from uid-commalist of records, like titles of referenced items
-     * params[conf][table] - table name
-     * params[conf][field] - field to take the label from
-     * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- or -SPACE-. default is comma+space (,-SPACE-)
-     * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
      *
+     * @deprecated Use \WoloPl\WQuery2csv\Process\LabelsFromMmRelations
      * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
      * @param Core $pObj
      * @return string
      */
     public function tableLabelsFromMmRelations($params, Core &$pObj)    {
-
-        if (!$params['conf']['table']  ||  !$params['conf']['field'])
-            return __METHOD__ . '() - NO TABLE OR FIELD SPECIFIED!';
-
-        $lineBreak = $this->getLineBreak($params['conf']['lineBreakType']);
-
-        if (!$params['conf']['delimiter'])
-            $params['conf']['delimiter'] = ',-SPACE-';
-
-        $params['conf']['delimiter'] = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $params['conf']['delimiter']);
-
-        $labels = [];
-
-        $res = $pObj->getDatabaseConnection()->exec_SELECTquery(
-                'r.'.$params['conf']['field'],
-                $params['conf']['table'] . ' AS r  JOIN ' . $params['conf']['table_mm'] . ' AS m  ON  r.uid = m.uid_foreign',
-                'm.uid_local = '.intval($params['row']['uid'])
-        );
-        while($row = $pObj->getDatabaseConnection()->sql_fetch_assoc($res))   {
-            $labels[] = $row[ $params['conf']['field'] ];
-        }
-
-        $value = implode($params['conf']['delimiter'], $labels);
-
-        return $value;
+	    GeneralUtility::logDeprecatedFunction();
+	    return GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Process\LabelsFromMmRelations::class)->run($params, $pObj);
     }
 
-    /**
-     * Converts linebreak type string to that linebreak itself
-     * @param string $lineBreakType
-     * @return string
-     */
-	protected function getLineBreak($lineBreakType)   {
-	    switch ($lineBreakType) {
-            case 'CR':
-                return CR;
-            case 'CRLF':
-                return CRLF;
-            case 'LF':
-            default:
-                return LF;
-        }
-    }
 }
 
 

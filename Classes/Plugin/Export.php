@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2017 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -77,18 +77,24 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	        // create core object
 	        $core = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $this->file_config);
 
-	        // get data
-	        $csv = $core->getCsv();
+	        if ($this->file_key)    {
+	            // get data
+	            $csv = $core->getCsv();
+	        }
+	        else    {
+	        	return '<!-- '.$this->prefixId. ': no file key given, nothing to do, exiting -->';
+	        }
         } catch (Exception $exception)  {
 	        return $this->prefixId . ': ' . $exception->getMessage();
         }
 
 
+        // debugging with ?debug=1 in url: on dev context automatically available, on other needs to be configured in ts to enable
         if (	(GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
 			||  (GeneralUtility::_GP('debug')  &&  getenv('TYPO3_CONTEXT') === 'Development'))   {
 
             print '<pre>';
-            var_dump($this->file_config);
+            print_r($this->file_config);
 	        print '<br>';
 	        print ($core->lastQuery);
 	        print '<br><br>';
@@ -115,6 +121,8 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
             // output content
             print $csv;
+            // from q3i version - is this needed like that?
+	        //print utf8_decode($csv);
         }
         else    {
             print 'Error: no data to output';
@@ -144,7 +152,8 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			    }
 			    else    {
 		            // if no key and default is disabled
-			        Throw new Exception('<b>Error:</b> No file key given!');
+				    return;
+			        //Throw new Exception('<b>Error:</b> No file key given!');
 			    }
 	        }
 	    }
