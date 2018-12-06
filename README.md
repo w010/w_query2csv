@@ -75,7 +75,7 @@ This can be done like that:
 $content .= '<a href="'.GeneralUtility::linkThisUrl($_SERVER['REQUEST_URI'], array('action' => 'getfile', 'f' => 'my_file')) . '">download file</a>';
 
 if ($_GET['action'] == 'getfile')	{
-	require_once(ExtensionManagementUtility::extPath('w_query2csv').'Classes/Plugin/Export.php');
+	require_once(ExtensionManagementUtility::extPath('w_query2csv').'Classes/Plugins/Export.php');
 
 	$conf = [
 		'debug_allowed' => 0,
