@@ -56,7 +56,8 @@ http://example.com/csv_export.html?f=somestuff_orders
 
 
 Note, that this plugin is not basing on standard TYPO3 page type handling, but is changing headers for whole page
-containg it, so do not insert it on standard frontend pages with normal content.  
+containing it, but you can insert it on standard frontend page between normal content - it won't output anything until 
+asked (using 'f' param or using 'default' key - see config).  
 But it's possible to make CSV output of any page uid using page type, if you use a snippet from 
 Configuration/TypoScript/Setup/setup.ts
 
@@ -322,7 +323,9 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 ### ! PLEASE REMEMBER !
 
-This is a low-level database exporter, which was intended to use by admins to easy download customized csv with product orders. Such things are always potentially dangerous if used in wrong way. Downloading full database tables by people who are not permitted may be a disaster - passwords leak, session hijack, etc... - so better check twice where do you put this plugin and what have you configured there, to not allow downloading any sensitive data by mistake!
+This is a low-level database exporter, which was intended to use by admins to easy download customized csv with product orders. Such things are always
+potentially dangerous if used in wrong way. Downloading full database tables by people who are not permitted may be a disaster - passwords leak, session
+hijack, etc... - so better check twice where do you put this plugin and what have you configured there, to not allow downloading any sensitive data by mistake!
 
 I recommend always embeding it on pages with BE-user or admin access only, unless you are sure what are you doing.
 
@@ -346,7 +349,7 @@ How to add own processing methods for field values?**
 > A:
 Write any Typo3-callable class with a run() public method with params ($params, &$pObj) and return a string.
 (Optionally you can use any method name and configure process using class->methodname)  
-In $params array you can expect to be passed:
+In $params array you can expect to be passed:  
 	'value' - field value from db  
 	'fieldName' - name of current processed field  
 	'row' - whole record of current item (I mean, fields which you set to read in .input.fields, if not "*")  
@@ -366,19 +369,19 @@ write a processing method like that:
 
 
 --  
-**Q:  
+**Q:
 My output file is empty!**
 
 > A:
 - try to set debug_allowed = 1 in config and access file with &debug=1 to check if the config is passed properly.
 - try to set "fields" to *, comment other parts of db query
 - check another table
-- set "default_enableColumns" to 0 (not just delete line!), maybe the table hasn't "deleted" and "hidden" fields
-- set "enableFields" to 0, maybe the table is not configured in TCA
+- set "default_enableColumns" to 0, maybe the table hasn't "deleted" and "hidden" fields
+- set "enableFields" to 0 (not just delete line!), maybe the table is not configured in TCA
 
 
 --  
-**Q:  
+**Q:
 What if be user edit has template edit priviliges and exports something that he is not allowed?  
 	Why I cannot export my fe_users?**
 
