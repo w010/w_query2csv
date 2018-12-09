@@ -6,7 +6,11 @@ readme / manual
 
 wolo.pl '.' studio  
 2009 - 2018  
-wolo.wolski@gmail.com
+wolo.wolski (at) gmail (dot) com
+
+
+https://github.com/w010/w_query2csv/
+
 
 Credits:  
 Q3i  
@@ -63,7 +67,7 @@ Configuration/TypoScript/Setup/setup.ts
 
 **Caution where do you insert this plugin and what is exported!**
 
-> ![backend typoscript](https://docs.typo3.org/typo3cms/extensions/w_query2csv/_images/img-4.jpeg)
+> ![backend typoscript / screenshot from old version](https://docs.typo3.org/typo3cms/extensions/w_query2csv/_images/img-4.jpeg)
 
 
 ### 3.2 Using in own plugins
@@ -76,7 +80,7 @@ This can be done like that:
 $content .= '<a href="'.GeneralUtility::linkThisUrl($_SERVER['REQUEST_URI'], array('action' => 'getfile', 'f' => 'my_file')) . '">download file</a>';
 
 if ($_GET['action'] == 'getfile')	{
-	require_once(ExtensionManagementUtility::extPath('w_query2csv').'Classes/Plugins/Export.php');
+	require_once(ExtensionManagementUtility::extPath('w_query2csv').'Classes/Plugin/Export.php');
 
 	$conf = [
 		'debug_allowed' => 0,
@@ -270,6 +274,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 
 'debug_allowed' (Bool/Int) 				- allow to use &debug=1 url param. Default = 0
+											(note, that on dev instance, where TYPO3_CONTEXT is set to Development, it's set automatically to 1)
 
 'default_config_if_missed' (Bool/Int) 	- load '_default' ts key config (or hardcoded ext conf, if not set) when config for given key not found / key not given. Default = 0
 
@@ -376,7 +381,7 @@ My output file is empty!**
 - try to set debug_allowed = 1 in config and access file with &debug=1 to check if the config is passed properly.
 - try to set "fields" to *, comment other parts of db query
 - check another table
-- set "default_enableColumns" to 0, maybe the table hasn't "deleted" and "hidden" fields
+- set "default_enableColumns" to 0, maybe the table doesn't have "deleted" and "hidden" fields
 - set "enableFields" to 0 (not just delete line!), maybe the table is not configured in TCA
 
 
@@ -425,7 +430,10 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 9. ChangeLog
 
-##### 0.4.0 
+##### 0.4.1
+- Automatic debug_allowed now works also on Development/[*] instances
+
+##### 0.4.0
 - Q3i modifications and features now integrated into ext (sql template file, postprocessors, some tuning)  
 - Value processing is now split to separate classes for each processor (@see Migrate) - (old way is deprecated but still works yet)  
 - Minor tweaks
