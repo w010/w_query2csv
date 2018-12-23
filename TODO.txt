@@ -3,3 +3,4 @@
 - add possibility to call multiple processors on single field
 - add possibility to process fieldnames in header row (traverse them to some nice labels, with spaces possible etc.)
 - some easy way to insert links to csv in rte/cke or/and generate a list of links to configured files with nice labels
+- LabelsFromRecords, LabelsFromMmRelations: try to find table and table_mm in TCA to not have to configure this (include info in debug)
