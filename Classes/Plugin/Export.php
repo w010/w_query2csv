@@ -91,9 +91,9 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 		$currentApplicationContext = \TYPO3\CMS\Core\Utility\GeneralUtility::getApplicationContext();
         // debugging with ?debug=1 in url: on dev context automatically available, on other needs to be configured in ts to enable
-        if (	(GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
-			||  (GeneralUtility::_GP('debug')  &&  $currentApplicationContext->isDevelopment())   {
-
+        if (    (GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
+            ||  (GeneralUtility::_GP('debug')  &&  $currentApplicationContext->isDevelopment())
+	) {
             print '<pre>';
             print_r($this->file_config);
 	        print '<br>';
