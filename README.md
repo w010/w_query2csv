@@ -157,7 +157,7 @@ When you take a look at reference below, you'll see, that only db table is reall
 shortest config would look like this:
 
 ```
-plugin.tx_wquery2csv_pi1.files.my_file.input.table = tx_sometable
+plugin.tx_wquery2csv_export.files.my_file.input.table = tx_sometable
 ```
 
 > Explaining:  
