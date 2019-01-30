@@ -430,6 +430,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 9. ChangeLog
 
+##### 0.4.2
+- Fixed stupid missed bracket in main plugin
+
 ##### 0.4.1
 - Automatic debug_allowed now works also on Development/[*] instances
 
