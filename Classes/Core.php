@@ -72,6 +72,11 @@ class Core	{
 	 * @param array $file_config
 	 */
 	public function __construct(&$pObj, $file_config)   {
+	    
+	    if (!\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('typo3db_legacy'))   {
+	        Throw new \TYPO3\CMS\Core\Exception('w_query2csv: extension typo3db_legacy is required, but not found.', 3409273549);
+        }
+	    
 		$this->_init($pObj);
         $this->config = $file_config;
 
@@ -161,7 +166,7 @@ class Core	{
 		                    // method not specified
 		                    $process_method .= '->run';
 	                    }
-                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this, '', 2);  // 2: allow exception on error, instead of only debug log
+                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this);  // 2: allow exception on error, instead of only debug log
                     } else if (strstr($value, 'USER_FUNC')) {
                         // process method taken from sql value (in most cases set in query template)
                         // imho we can get the same result using ts add_fields and process_fields, but maybe sometimes it's more handy to do it from sql file
@@ -297,7 +302,7 @@ class Core	{
             } else {
                 die ("<b>Fatal error:</b> Given file {$input['sql_file']} does not exist or is not readable.");
             }
-	        $preparedStatement = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\PreparedStatement::class, $fileContent, '', []);
+	        $preparedStatement = GeneralUtility::makeInstance(\TYPO3\CMS\Typo3DbLegacy\Database\PreparedStatement::class, $fileContent, '', []);
 	        $preparedStatement->execute();
 
         } else {
@@ -307,7 +312,7 @@ class Core	{
         	$preparedStatement = $this->getDatabaseConnection()->prepare_SELECTquery(
                 	$input['fields'],
                 	$input['table'],
-                	$input['where'] . ($input['default_enableColumns']
+                	($input['where'] ? $input['where'] : '1=1') . ($input['default_enableColumns']
                         ? ' AND NOT deleted AND NOT hidden'
                         : $input['enableFields']
                                 ? $this->cObj->enableFields($input['table'])
@@ -326,7 +331,7 @@ class Core	{
     /**
      * Returns the database connection
      *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     * @return \TYPO3\CMS\Typo3DbLegacy\Database\DatabaseConnection
      */
     public function getDatabaseConnection()  {
         return $GLOBALS['TYPO3_DB'];

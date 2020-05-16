@@ -1,8 +1,8 @@
 # note, that the typoscript below is not to be included as-is
-# these are just examples, how to use it.
+# these are just examples how to use it.
 # you need to copy this to your template setup and fine-tune to your needs
 
-# REMEMBER that it may not be safe to allow exporting any database tables, so THINK WHAT DO YOU DO
+# REMEMBER that it may not be safe to allow exporting any database tables, so THINK WHAT ARE YOU DOING
 
 
 
@@ -75,8 +75,8 @@ wquery2csv	{
 		files	{
 			_default	{
 				input {
-					table = tt_content
-					fields = uid,header
+					table = 
+					fields = 
 					where_wrap = TEXT
 					where_wrap.value = pid = {page:uid}
 					where_wrap.stdWrap.insertData = 1
