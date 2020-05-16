@@ -5,7 +5,7 @@ readme / manual
 
 
 wolo.pl '.' studio  
-2009 - 2018  
+2009 - 2020
 wolo.wolski (at) gmail (dot) com
 
 
@@ -429,6 +429,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.5.0
+- TYPO3 9.5 compatibility (needs typo3db_legacy to be installed, no doctrine support yet)
 
 ##### 0.4.2
 - Fixed stupid missed bracket in main plugin
