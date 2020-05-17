@@ -24,6 +24,8 @@
 
 namespace WoloPl\WQuery2csv;
 
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -72,11 +74,7 @@ class Core	{
 	 * @param array $file_config
 	 */
 	public function __construct(&$pObj, $file_config)   {
-	    
-	    if (!\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('typo3db_legacy'))   {
-	        Throw new \TYPO3\CMS\Core\Exception('w_query2csv: extension typo3db_legacy is required, but not found.', 3409273549);
-        }
-	    
+
 		$this->_init($pObj);
         $this->config = $file_config;
 
@@ -122,7 +120,6 @@ class Core	{
 
         // set default values for not given options
         if (!isset($input['fields']))           $input['fields'] = '*';
-        if (!isset($input['enable_fields']))    $input['enable_fields'] = 1;
         if (!isset($output['separator']))       $output['separator'] = ',';
         if (!isset($output['quote']))           $output['quote'] = '"';
 
@@ -166,7 +163,7 @@ class Core	{
 		                    // method not specified
 		                    $process_method .= '->run';
 	                    }
-                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this);  // 2: allow exception on error, instead of only debug log
+                    	$value = GeneralUtility::callUserFunction($process_method, $params, $this);
                     } else if (strstr($value, 'USER_FUNC')) {
                         // process method taken from sql value (in most cases set in query template)
                         // imho we can get the same result using ts add_fields and process_fields, but maybe sometimes it's more handy to do it from sql file
@@ -247,9 +244,6 @@ class Core	{
 	            $rowBuffer[] = $fields;
                 $counter++;
             }
-
-	        // free prepared statement resources
-	        $preparedStatement->free();
         }
 
 	    if (!$output['no_header_row']) {
@@ -288,10 +282,9 @@ class Core	{
     * @return object mysql_res
     */
     private function _readData($input)    {
-        $this->getDatabaseConnection()->store_lastBuiltQuery = true;
 
+        // File based query (sql template) 
         if ($input['sql_file']) {
-            // File based query (sql template)
             if (is_file($input['sql_file'])) {
                 $fileContent = file_get_contents($input['sql_file']);
                 if ($input['sql_markers.']) {
@@ -302,39 +295,50 @@ class Core	{
             } else {
                 die ("<b>Fatal error:</b> Given file {$input['sql_file']} does not exist or is not readable.");
             }
-	        $preparedStatement = GeneralUtility::makeInstance(\TYPO3\CMS\Typo3DbLegacy\Database\PreparedStatement::class, $fileContent, '', []);
-	        $preparedStatement->execute();
-
-        } else {
-        	// standard-typoscript build sql query
-        	if ($input['where_wrap.'])
-	        	$input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
-        	$preparedStatement = $this->getDatabaseConnection()->prepare_SELECTquery(
-                	$input['fields'],
-                	$input['table'],
-                	($input['where'] ? $input['where'] : '1=1') . ($input['default_enableColumns']
-                        ? ' AND NOT deleted AND NOT hidden'
-                        : $input['enableFields']
-                                ? $this->cObj->enableFields($input['table'])
-                                : ''),
-                $input['group'],
-                $input['order'],
-                $input['limit']
-        	);
+	        $preparedStatement = $this->getDatabaseConnection()->prepare($fileContent);
         	$preparedStatement->execute();
+            $this->lastQuery = $fileContent;
         }
 
-        $this->lastQuery = $this->getDatabaseConnection()->debug_lastBuiltQuery;
+        // standard: sql build from typoscript setup
+        else {
+        	if ($input['where_wrap.'])
+	        	$input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
+        	
+        	if ($input['enableFields']) {
+                $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($input['table']);
+                $restrictions = $queryBuilder->getRestrictions();
+                $ExpressionBuilder = GeneralUtility::makeInstance(ExpressionBuilder::class,
+                    GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionByName('Default'));
+                $restrictionsExpression = $restrictions->buildExpression([$input['table'] => $input['table']], $ExpressionBuilder);
+            }
+        	
+        	$query = 'SELECT ' . $input['fields']
+                . ' FROM ' . $input['table']
+                . ' WHERE ' . ($input['where'] ? $input['where'] : '1=1') 
+                    . ($input['default_enableColumns'] ? ' AND NOT deleted AND NOT hidden'
+                        : ($input['enableFields'] && $restrictionsExpression ? ' AND ' . $restrictionsExpression
+                            : ''))
+                . ($input['group'] ? ' GROUP BY ' . $input['group'] : '')
+                . ($input['order'] ? ' ORDER BY ' . $input['order'] : '')
+                . ($input['limit'] ? ' LIMIT ' . $input['limit'] : '');
+
+        	$preparedStatement = $this->getDatabaseConnection()->prepare($query);
+        	$preparedStatement->execute();
+            $this->lastQuery = $query;
+        }
+
         return $preparedStatement;
     }
 
     /**
      * Returns the database connection
      *
-     * @return \TYPO3\CMS\Typo3DbLegacy\Database\DatabaseConnection
+     * @return \Doctrine\DBAL\Driver\Connection
      */
     public function getDatabaseConnection()  {
-        return $GLOBALS['TYPO3_DB'];
+        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+		return $pool->getConnectionByName('Default')->getWrappedConnection();
     }
 }
 

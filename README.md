@@ -204,7 +204,6 @@ _See more examples in Configuration/TypoScript/setup.ts_
 				where_wrap.stdWrap.insertData = 1
 	
 			'enableFields' (Bool/Int) 	- use system enableFields for excluding unavailable records. works of course only for TCA configured tables
-				 DEFAULT IS ENABLED (so if you was given empty csv, check that selected table has these fields and set this option to 0 if not)
 	
 			'default_enableColumns' (Bool/Int) - use hardcoded "deleted=0 AND hidden=0" in WHERE clause. In case you have some records from a table
 				that is not currently loaded to TCA (like disabled ext) you can enable this option to simply filter them instead of writing this in where. Default = 0

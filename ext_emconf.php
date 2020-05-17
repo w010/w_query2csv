@@ -16,7 +16,7 @@ $EM_CONF[$_EXTKEY] = [
 	'description' => 'This extension provides exporting given database query to a CSV file. If you have some data stored in db, that must be quick sent to someone eg. by email, or periodically downloaded by someone,
 this extension is very useful. It\'s simple and easy to configure.',
 	'category' => 'plugin',
-	'version' => '0.5.0',
+	'version' => '0.6.0-dev',
 	'state' => 'stable',
 	'uploadfolder' => 0,
 	'createDirs' => '',
@@ -26,8 +26,7 @@ this extension is very useful. It\'s simple and easy to configure.',
 	'author_company' => 'wolo.pl \'.\' studio, Q3i',
 	'constraints' => [
 		'depends' => [
-			'typo3' => '9.0.0-9.5.99',
-			'typo3db_legacy' => '1.1.1-9.9.9',
+			'typo3' => '9.5.0-9.5.99',
 		],
 		'conflicts' => [
 		],
