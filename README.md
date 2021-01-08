@@ -5,7 +5,7 @@ readme / manual
 
 
 wolo.pl '.' studio  
-2009 - 2020
+2009 - 2021
 wolo.wolski (at) gmail (dot) com
 
 
@@ -22,11 +22,12 @@ Hint Intermedia
 
 ## 1. WHAT IS THIS?
 
-This is an extension for quick export SQL table or query/ies to CSV file/s. You may configure number of files 
+It's an extension to provide quick exporting of database tables/queries to CSV files. You may configure files 
 which will be available, for every file using their own settings, select different table, fields which will be 
-exported, standard parts of MySQL query, file charset, csv fields separator and more. All that is fast and easy, 
-using included example TypoScript.  
-You may also parse selected fields with own or built-in methods, like tstamp to human-readable date.
+exported, standard parts of MySQL query, file charset, csv fields separator and more. Also you can use sql template
+files to prepare complicated predefined queries. All that is fast and easy, using included example TypoScript.  
+Selected data fields may be processed with own or built-in methods, like timestamp to human-readable date,
+map uids to values, fill labels using values from related tables, or parsed in other way.  
 
 
 	PLEASE SEE "SECURITY" SECTION BEFORE USE!
@@ -38,7 +39,7 @@ You may also parse selected fields with own or built-in methods, like tstamp to 
 If you have data set in db, eg. some orders or contest answers, that must be quick sent to someone by email, or 
 periodically downloaded by someone, or something like that, this extension is very useful.
 
-Just make new page, insert plugin and set up the file, that will be downloaded by other or specified users, which you 
+Just make a new page, insert plugin and set up the file, that will be downloaded by other or specified users, which you 
 may specify by standard TYPO3 access settings.  
 It's simple and easy to configure, additionally you may process selected fields using some functions, eg. convert 
 timestamps to human-readable strings.
@@ -53,17 +54,23 @@ If you want something more functional it's a good base to develop something bigg
 
 ### 3.1 Basic
 
-Simply insert plugin on new page named eg. 'CSV export' and configure input and output using TypoScript.
-A Backend Section type page is good idea, you might control download access for backend non-admin users.
-To download file, you have to access url using _?f=[configuration_key]_, as here:  
+Simply insert plugin on a new page named eg. 'CSV export' and configure input and output using TypoScript.
+A Backend Section type page is good idea, you may want to control download access for backend non-admin users.
+To download file, you call page url + file id using _?f=[configuration_key]_, like that:  
 http://example.com/csv_export.html?f=somestuff_orders
 
 
-Note, that this plugin is not basing on standard TYPO3 page type handling, but is changing headers for whole page
-containing it, but you can insert it on standard frontend page between normal content - it won't output anything until 
+Note, that this plugin's output is not based on standard TYPO3 page type handling, but sends headers and sends output
+on a page containing it. But you can insert it on standard frontend page between normal content - it won't output anything until 
 asked (using 'f' param or using 'default' key - see config).  
-But it's possible to make CSV output of any page uid using page type, if you use a snippet from 
+It's possible to make CSV output using page type, if you use a snippet from 
 Configuration/TypoScript/Setup/setup.ts
+
+(You may wonder why it's made in such weird way, why not generate nice typolinks with piVars, cHash etc?  
+  - to not suggest that it's just another content element / simple frontend functionality. I mean, it was made for private use,
+	to help admins with downloading orders from forms, so it doesn't have too much security check, user control etc. It's just
+	an adapter, a flexible data output renderer. If you need it as a public frontend function, implement the interface by yourself,
+	write a plugin and use my ext from inside, taking care of what it have to be taken.)
 
 **Caution where do you insert this plugin and what is exported!**
 
@@ -287,22 +294,33 @@ _See more examples in Configuration/TypoScript/setup.ts_
 	ParseDate - Converts timestamp to human-readable date, parsed using date() function
 		config:
 			.format = [string] - date mask, default: Y.m.d H:i
-	
+
+
 	ValueMap - Static value maps, input (like some id) to output (like some nice labels). (input val = output val pairs)
 		(note that you can't use spaces in source val, and dots need to be escaped for typoscript - use \.)
 		config:
 			.map {
 				source_value = Export Value
 			}
+
 	
 	StaticValue - Replaces original value with given, always the same – may be handy in some cases:
 		config:
 			.value = [string]
+
+			
+	PregReplace - Performs regular expression replacement using php's preg_replace function
+		config:
+			.pattern = [string] - regexp pattern to match
+			.replacement = [string] - when string found, replace with this one
+			.limit = [int] - limit replacements, if matches multiple
+
 	
 	Unserialize - Unserializes an array and generates key: value pairs separated by given delimiter
 		config:
 			.delimiter = [string] - may be anything, also you can use special keywords: -LINEBREAK- and -SPACE-. defaults to linebreak
 			.lineBreakType = [string] - if use linebreak, may be configured to use CR, LF or CRLF. defaults to LF
+
 	
 	LabelsFromRecords - Generate string with some values from related records, using uid-commalist, like, ie. titles of referenced categories
 		config:
@@ -310,14 +328,17 @@ _See more examples in Configuration/TypoScript/setup.ts_
 			.field = [string] - use value from this field
 			.delimiter = [string] - may be anything, also you can use special keywords: -LINEBREAK- and -SPACE-. defaults to linebreak
 			.lineBreakType = [string] - may be CR, LF or CRLF. defaults to LF
-	
+			.additional_where = [string] - optional where part to filter joined records (must start with AND)
+			.useValueFromField = [string] - instead of current field's value, use another column from current row
+
+
 	LabelsFromMmRelations - Same as previous, but uses mm table to read records
 		(note, that to make this work, you MUST add "uid" field to your .input.fields. if you don't wanna uid column in csv, use .output.remove_fields = uid)
 		config:
 			the same as above, plus:
 			.table_mm = [string] - mm relations table
 	
-	...or write your own.
+...or write your own.
 ```
 
 
@@ -331,7 +352,7 @@ This is a low-level database exporter, which was intended to use by admins to ea
 potentially dangerous if used in wrong way. Downloading full database tables by people who are not permitted may be a disaster - passwords leak, session
 hijack, etc... - so better check twice where do you put this plugin and what have you configured there, to not allow downloading any sensitive data by mistake!
 
-I recommend always embeding it on pages with BE-user or admin access only, unless you are sure what are you doing.
+I recommend embedding it always on pages with BE-user or admin access only, unless you are sure what are you doing.
 
 
 
@@ -354,7 +375,7 @@ How to add own processing methods for field values?**
 Write any Typo3-callable class with a run() public method with params ($params, &$pObj) and return a string.
 (Optionally you can use any method name and configure process using class->methodname)  
 In $params array you can expect to be passed:  
-	'value' - field value from db  
+	'value' - field value from db
 	'fieldName' - name of current processed field  
 	'row' - whole record of current item (I mean, fields which you set to read in .input.fields, if not "*")  
 	'conf' - typoscript configuration of this processor
@@ -368,8 +389,8 @@ write a processing method like that:
 > public function doSomethingWithValue($params, \WoloPl\WQuery2csv\Core &$pObj)    { return $myProcessedString }
 
 > and register using:  
-	plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\Extensions\WQuery2csv\Process->doSomethingWithValue  
-	plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field.someAdditionalOptionToPass = something
+	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\Extensions\WQuery2csv\Process->doSomethingWithValue``  
+	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field.someAdditionalOptionToPass = something``
 
 
 --  
@@ -377,11 +398,11 @@ write a processing method like that:
 My output file is empty!**
 
 > A:
-- try to set debug_allowed = 1 in config and access file with &debug=1 to check if the config is passed properly.
-- try to set "fields" to *, comment other parts of db query
-- check another table
-- set "default_enableColumns" to 0, maybe the table doesn't have "deleted" and "hidden" fields
-- set "enableFields" to 0 (not just delete line!), maybe the table is not configured in TCA
+> - try to set debug_allowed = 1 in config and access file with &debug=1 to check if the config is passed properly.
+> - try to set "fields" to *, comment other parts of db query
+> - check another table
+> - set "default_enableColumns" to 0, maybe the table doesn't have "deleted" and "hidden" fields
+> - set "enableFields" to 0 (not just delete line!), maybe the table is not configured in TCA
 
 
 --  
@@ -401,17 +422,26 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 7. Migrate
 
-* from version 0.1.x
-	- typoscript setup key is now: plugin.tx_wquery2csv_export instead of plugin.tx_wquery2csv_pi1
-	- the plugin content element embeded on page must be selected again for the same reason
-	- process_fields now expects full callable userfunc reference
-	- so, _process_parseDate option is now \WoloPl\WQuery2csv\Process\ParseDate
-	- process_fields_user is now removed, use process_fields instead, just like the rest
-	- output.where now need to be full, not starting from "AND" (1=1 is removed, so just remove this AND from beginning)
+* from version 0.5.0
+	- process_fields: deprecated class Process is finally removed, so processing config like: ~~WoloPl\WQuery2csv\Process->\[processingMethod]~~
+	  doesn't work anymore. change to: ``WoloPl\WQuery2csv\Process\[ProcessingClass]`` (@see output.process_fields and ref in point 4.4)
+
 
 * from version 0.3.0
-	- process_fields: processors are now in separate classes, so instead WoloPl\WQuery2csv\Process->parseDate use now:  WoloPl\WQuery2csv\Process\ParseDate
-	(also \Process->tableLabelsFromRecordsCommalist becames \Process\LabelsFromRecords and \Process->tableLabelsFromMmRelations becames \Process\LabelsFromMmRelations)
+	- process_fields: processors are now in separate classes, so
+	  instead ``WoloPl\WQuery2csv\Process->parseDate`` use now:  ``WoloPl\WQuery2csv\Process\ParseDate``
+	  (also ``\Process->tableLabelsFromRecordsCommalist`` became: ``\Process\LabelsFromRecords``
+	   and ``\Process->tableLabelsFromMmRelations`` is now: ``\Process\LabelsFromMmRelations``)
+
+
+* from version 0.1.x
+	- typoscript setup key is now: ``plugin.tx_wquery2csv_export`` instead of ``plugin.tx_wquery2csv_pi1``
+	- the plugin content element embeded on page must be selected again for the same reason
+	- process_fields now expects full callable userfunc reference
+	- so, ``_process_parseDate`` option is now ``\WoloPl\WQuery2csv\Process\ParseDate``
+	- ``process_fields_user`` is now removed, use ``process_fields instead``, just like the rest
+	- output.where now need to be full, not starting from "AND" (1=1 is removed, so just remove this AND from beginning)
+
 
 
 
@@ -428,6 +458,10 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.0
+- TYPO3 10.4 / doctrine compatibility
+- removed deprecated general Process class
 
 ##### 0.5.0
 - TYPO3 9.5 compatibility (needs typo3db_legacy to be installed, no doctrine support yet)
@@ -463,4 +497,35 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ##### 0.1.1
 - First release with full documentation.
+
+
+
+
+
+
+## 10. More examples
+
+	plugin.tx_wquery2csv_export.files  {
+		test	{
+			input	{
+				table = tx_news_domain_model_news
+				limit = 3
+				fields = uid,title
+			}
+	
+			output	{
+				add_fields = cat_internal
+				process_fields	{
+					cat_internal = WoloPl\WQuery2csv\Process\LabelsFromMmRelations
+					cat_internal	{
+						table = sys_category
+						table_mm = sys_category_record_mm
+						field = title
+					}
+				}
+			}
+		}
+	}
+
+
 

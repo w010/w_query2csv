@@ -12,11 +12,11 @@
 
 
 $EM_CONF[$_EXTKEY] = [
-	'title' => 'Export db query to file',
-	'description' => 'This extension provides exporting given database query to a CSV file. If you have some data stored in db, that must be quick sent to someone eg. by email, or periodically downloaded by someone,
-this extension is very useful. It\'s simple and easy to configure.',
+	'title' => 'Export database/query to a CSV',
+	'description' => 'This extension provides download points for predefined database queries to customized CSV files. If you have some data stored in db, that must be quick sent to someone, periodically downloaded by someone,
+and the fields parsed for readability, this extension is very useful. It\'s simple and easy to configure.',
 	'category' => 'plugin',
-	'version' => '0.6.0-dev',
+	'version' => '0.6.0',
 	'state' => 'stable',
 	'uploadfolder' => 0,
 	'createDirs' => '',
@@ -26,7 +26,7 @@ this extension is very useful. It\'s simple and easy to configure.',
 	'author_company' => 'wolo.pl \'.\' studio, Q3i',
 	'constraints' => [
 		'depends' => [
-			'typo3' => '9.5.0-9.5.99',
+			'typo3' => '9.5.0-10.4.99',
 		],
 		'conflicts' => [
 		],
