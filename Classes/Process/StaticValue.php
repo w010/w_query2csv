@@ -24,6 +24,7 @@
 
 namespace WoloPl\WQuery2csv\Process;
 
+use WoloPl\WQuery2csv\Core;
 
 
 /**
@@ -33,18 +34,18 @@ namespace WoloPl\WQuery2csv\Process;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class StaticValue	{
+class StaticValue implements ProcessorInterface	{
 
 
 	/**
 	 * Set static value given in 'value' key of params array
 	 *
-	 * @param $params: string 'value', array 'conf', array 'row', string 'fieldname'
-	 * @param \WoloPl\WQuery2csv\Core $pObj
+	 * @param array $params: string 'value', array 'conf', array 'row', string 'fieldname'
+	 * @param Core $pObj
 	 * @return string
 	 */
-	public function run($params, \WoloPl\WQuery2csv\Core &$pObj) {
-		return $params['conf']['value'];
+	public function run(array $params, Core &$pObj): string {
+		return (string) $params['conf']['value'];
 	}
 
 }

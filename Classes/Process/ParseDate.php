@@ -24,6 +24,7 @@
 
 namespace WoloPl\WQuery2csv\Process;
 
+use WoloPl\WQuery2csv\Core;
 
 
 /**
@@ -33,17 +34,17 @@ namespace WoloPl\WQuery2csv\Process;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class ParseDate	{
+class ParseDate implements ProcessorInterface	{
 
 
 	/**
 	 * Format date timestamp
 	 *
 	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
-	 * @param \WoloPl\WQuery2csv\Core $pObj
+	 * @param Core $pObj
 	 * @return string - parsed date
 	 */
-	public function run($params, \WoloPl\WQuery2csv\Core &$pObj)    {
+	public function run(array $params, Core &$pObj): string    {
 		$conf = $params['conf'];
 		if (!$conf['format'])
 			$conf['format'] = 'Y.m.d H:i';

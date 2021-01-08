@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -22,37 +22,35 @@
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
-namespace WoloPl\WQuery2csv;
+namespace WoloPl\WQuery2csv\Process;
 
-use \TYPO3\CMS\Core\Utility\GeneralUtility;
+use WoloPl\WQuery2csv\Core;
+
 
 
 /**
- * Utility helper
+ * Process value: Preg replace
  *
  * @author	Wolo <wolo.wolski@gmail.com>
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class Utility	{
+class PregReplace implements ProcessorInterface	{
 
 
-    /**
-     * Converts linebreak type string to that linebreak itself
-     * @param string $lineBreakType
-     * @return string
-     */
-	static public function getLineBreak(string $lineBreakType): string   {
-	    switch ($lineBreakType) {
-            case 'CR':
-                return CR;
-            case 'CRLF':
-                return CRLF;
-            case 'LF':
-            default:
-                return LF;
-        }
+	/**
+	 * Performs regular expression replacement using preg_replace
+	 *
+	 * @param array $params: array 'pattern' (string) - regexp pattern, 'replacement' (string) - replacement, 'limit' (int) - max replacements (see preg_replace manual)
+	 * @param Core $pObj
+	 * @return string
+	 */
+    public function run(array $params, Core &$pObj): string {
+		$conf = $params['conf'];
+	    if (!$conf['pattern'])
+	        return (string) $params['value'];
+
+	    return (string) preg_replace($conf['pattern'], $conf['replacement'], $params['value'], $conf['limit'] ?? -1);
     }
+
 }
-
-

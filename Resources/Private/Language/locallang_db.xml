@@ -6,7 +6,7 @@
 	</meta>
 	<data type="array">
 		<languageKey index="default" type="array">
-			<label index="tt_content.list_type_export">Export db table/query to csv file</label>
+			<label index="tt_content.list_type_export">Export database query to CSV file</label>
 		</languageKey>
 	</data>
 </T3locallang>

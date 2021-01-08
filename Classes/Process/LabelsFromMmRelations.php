@@ -24,6 +24,8 @@
 
 namespace WoloPl\WQuery2csv\Process;
 
+use WoloPl\WQuery2csv\Core;
+
 
 
 /**
@@ -33,7 +35,8 @@ namespace WoloPl\WQuery2csv\Process;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class LabelsFromMmRelations	{
+class LabelsFromMmRelations implements ProcessorInterface	{
+
 
 
     /**
@@ -42,18 +45,19 @@ class LabelsFromMmRelations	{
      * params[conf][field] - field to take the label from
      * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- or -SPACE-. default is comma+space (,-SPACE-)
      * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
+     * params[conf][additional_where] - string - optional query where part (must start with AND)
      *
      * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
-     * @param \WoloPl\WQuery2csv\Core $pObj
+     * @param Core $Core
      * @return string
      */
-    public function run($params, \WoloPl\WQuery2csv\Core &$pObj)    {
+    public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'];
 
         if (!$conf['table']  ||  !$conf['table_mm']  ||  !$conf['field'])
             return __METHOD__ . '() - NO TABLE OR TABLE_MM OR FIELD SPECIFIED!';
 
-        $lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak($conf['lineBreakType']);
+        $lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
 
         if (!$conf['delimiter'])
             $conf['delimiter'] = ',-SPACE-';
@@ -62,18 +66,22 @@ class LabelsFromMmRelations	{
 
         $labels = [];
 
-        $res = $pObj->getDatabaseConnection()->exec_SELECTquery(
-                'r.'.$conf['field'],
-                $conf['table'] . ' AS r  JOIN ' . $conf['table_mm'] . ' AS m  ON  r.uid = m.uid_foreign',
-                'm.uid_local = '.intval($params['row']['uid'])
-        );
-        while($row = $pObj->getDatabaseConnection()->sql_fetch_assoc($res))   {
+        $query = 'SELECT r.'.$conf['field']
+            . ' FROM ' . $conf['table'] . ' AS r '
+            . ' JOIN ' . $conf['table_mm'] . ' AS m '
+            . ' ON  r.uid = m.uid_foreign'
+            . ' WHERE m.uid_local = '.intval($params['row']['uid'])
+            . $conf['additional_where'];
+        
+        $preparedStatement = $Core->getDatabaseConnection()->prepare($query);
+        $preparedStatement->execute();
+        $Core->lastQuery[] = $query;
+
+        while(($row = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
             $labels[] = $row[ $conf['field'] ];
         }
 
-        $value = implode($conf['delimiter'], $labels);
-
-        return $value;
+        return implode($conf['delimiter'], $labels);
     }
 
 }

@@ -8,7 +8,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 ];
 
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPItoST43(
-	$_EXTKEY,
+	'w_query2csv',
 	'Classes/Plugin/Export.php',
 	'_export',
 	'list_type',

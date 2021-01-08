@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -62,10 +62,9 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * @param	array		$conf: The PlugIn configuration
 	 * @return  string
 	 */
-	function main($content, $conf)	{
+	function main(string $content, array $conf): string	{
 		$this->conf = $conf;
 		$this->pi_setPiVarDefaults();
-		$this->pi_USER_INT_obj = 1;     // Configuring that caching is not expected. This value means that no cHash params are ever set. We do this, because it's a USER_INT object!
 
 
         $this->file_key = GeneralUtility::_GP('f');
@@ -89,7 +88,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
         }
 
 
-		$currentApplicationContext = \TYPO3\CMS\Core\Utility\GeneralUtility::getApplicationContext();
+		$currentApplicationContext = \TYPO3\CMS\Core\Core\Environment::getContext();
         // debugging with ?debug=1 in url: on dev context automatically available, on other needs to be configured in ts to enable
         if (	(GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
 			||  (GeneralUtility::_GP('debug')  &&  $currentApplicationContext->isDevelopment())
@@ -98,7 +97,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
             print '<pre>';
             print_r($this->file_config);
 	        print '<br>';
-	        print ($core->lastQuery);
+	        print_r($core->lastQuery);
 	        print '<br><br>';
 	        print $csv;
 	        print '</pre>';
@@ -112,10 +111,10 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
             // todo: check if strlen is sure enough - shouldn't it be mb_strlen? is this length header really necessary here?
             // in case some problems with not complete output it may be this Content-Length
 			$len = strlen($csv);
-			header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+			header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
             header('Content-Type: text/csv; charset=' . ($this->file_config['output.']['charset'] ? $this->file_config['output.']['charset'] : 'utf-8'));
             header('Content-Disposition: attachment; filename=' . $this->file_config['output.']['filename']);
-            header("Content-Length: $len;\n");
+            header('Content-Length: ' . "$len;\n");
             // for ie problem:
             header('Pragma: private');
 			header('Cache-Control: private, must-revalidate');
@@ -176,7 +175,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
      * Sets default config if not given in typoscript.
      * In some cases you might need to modify the code and adjust this to your needs
      */
-    private function _setDefaultConfig()    {
+    private function _setDefaultConfig(): array    {
 
         // check if _default key is configured in TS
         $this->file_key = '_default';
@@ -188,7 +187,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
             $this->file_key = '_default_hardcoded';
 
-            return [
+            $this->file_config = [
                 /*'input.' => [
                     'table' => 'tx_somestuff',
                     'fields' => 'tstamp,name,email,phone,stuff_id',
@@ -202,7 +201,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
                     'filename' => 'order.csv',
                     'separator' => ',',
                     'charset' => 'UTF-8',
-                    'process_fields.' => ['tstamp' => 'WoloPl\WQuery2csv\Process->parseDate'],   // field => methodname
+                    'process_fields.' => ['tstamp' => \WoloPl\WQuery2csv\Process\parseDate::class],   // field => methodname
                 ]*/
             ];
         }

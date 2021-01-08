@@ -24,6 +24,7 @@
 
 namespace WoloPl\WQuery2csv\Process;
 
+use WoloPl\WQuery2csv\Core;
 
 
 /**
@@ -33,7 +34,7 @@ namespace WoloPl\WQuery2csv\Process;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class Unserialize	{
+class Unserialize implements ProcessorInterface	{
 
 
 	/**
@@ -42,13 +43,13 @@ class Unserialize	{
      * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
 	 *
 	 * @param array $params: 'value' - serialized string, 'conf' array with 'delimiter'
-	 * @param \WoloPl\WQuery2csv\Core $pObj
+	 * @param Core $pObj
 	 * @return string
 	 */
-	public function run($params, \WoloPl\WQuery2csv\Core &$pObj)    {
+	public function run(array $params, Core &$pObj): string    {
 		$conf = $params['conf'];
 
-		$lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak($conf['lineBreakType']);
+		$lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
 
 		if (!$conf['delimiter'])
 			$conf['delimiter'] = '-LINEBREAK-';

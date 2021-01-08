@@ -24,6 +24,7 @@
 
 namespace WoloPl\WQuery2csv\Process;
 
+use WoloPl\WQuery2csv\Core;
 
 
 /**
@@ -33,23 +34,23 @@ namespace WoloPl\WQuery2csv\Process;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class ValueMap	{
+class ValueMap implements ProcessorInterface	{
 
 
 	/**
 	 * Replace with predefined value from given map array. If not found, return original
 	 *
-	 * @param $params: array 'map' - [oldValue = New Value] pairs
-	 * @param \WoloPl\WQuery2csv\Core $pObj
+	 * @param array $params: array 'map' - [oldValue = New Value] pairs
+	 * @param Core $pObj
 	 * @return string
 	 */
-    public function run($params, \WoloPl\WQuery2csv\Core &$pObj) {
+    public function run(array $params, Core &$pObj): string {
 		$conf = $params['conf'];
 	    if (!$conf['map.'])
 		    $conf['map.'] = [];
 	    if ($conf['map.'][ $params['value'] ])
-	    	return $conf['map.'][ $params['value'] ];
-	    return $params['value'];
+	    	return (string) $conf['map.'][ $params['value'] ];
+	    return (string) $params['value'];
     }
 
 }

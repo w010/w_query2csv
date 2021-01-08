@@ -39,14 +39,14 @@ plugin.tx_wquery2csv_export  {
 				#hsc = 0
 				#no_header_row = 0
 				process_fields {
-					tstamp = WoloPl\WQuery2csv\Process->parseDate
+					tstamp = WoloPl\WQuery2csv\Process\ParseDate
 					tstamp.format = d.m.Y H:i
-					category = WoloPl\WQuery2csv\Process->valueMap
+					category = WoloPl\WQuery2csv\Process\ValueMap
 					category.map	{
 						0 = No category
 						39 = Event
 					}
-					some_field = someClass->userfuncReference
+					# some_field = someClass->userfuncReference
 				}
 				add_fields = newFieldX,newFieldY
 			}
@@ -58,6 +58,9 @@ plugin.tx_wquery2csv_export  {
 	}
 
 	debug_allowed = 0
+	
+	# instead of setting files.somefile and calling ?f=somefile you can configure files._default and set this to 1.
+	# this way you don't have to specify file id by url, always output that default one
 	default_config_if_missed = 0
 }
 

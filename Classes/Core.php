@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-
+use TYPO3\CMS\Frontend\Plugin\AbstractPlugin;
 
 
 /**
@@ -50,9 +50,9 @@ class Core	{
 	/**
 	* Stored last select query
 	*
-	* @var string
+	* @var array
 	*/
-	public $lastQuery = '';
+	public $lastQuery = [];
 
 
 	/**
@@ -70,10 +70,10 @@ class Core	{
 	/**
 	 * Construct
 	 *
-	 * @param $pObj
+	 * @param AbstractPlugin|Object $pObj
 	 * @param array $file_config
 	 */
-	public function __construct(&$pObj, $file_config)   {
+	public function __construct(&$pObj, array $file_config)   {
 
 		$this->_init($pObj);
         $this->config = $file_config;
@@ -92,9 +92,9 @@ class Core	{
 	/**
 	 * Initialize object
 	 * (it may not always be AbstractPlugin, Core is meant to be used from any context)
-	 * @param $pObj
+	 * @param AbstractPlugin|Object $pObj
 	 */
-    protected function _init(&$pObj)   {
+    protected function _init(&$pObj): void  {
 		$this->pObj = $pObj;
 		if (is_object($pObj->cObj))
 			$this->cObj = $pObj->cObj;
@@ -108,7 +108,7 @@ class Core	{
     *
     * @return string $csv - csv file content
     */
-    public function getCsv()     {
+    public function getCsv(): string     {
         $input = $this->config['input.'];
         $output = $this->config['output.'];
 
@@ -130,7 +130,7 @@ class Core	{
 
         // main iteration
         if ($preparedStatement)   {
-            while(($row_db = $preparedStatement->fetch()) !== FALSE)   {
+            while(($row_db = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
 
 	            // make sure that $fields array is empty and ready for new row data
 	            $fields = [];
@@ -279,9 +279,9 @@ class Core	{
     * Reads data from database with given config
     *
     * @param array $input
-    * @return object mysql_res
+    * @return \Doctrine\DBAL\Driver\Statement
     */
-    private function _readData($input)    {
+    private function _readData(array $input): \Doctrine\DBAL\Driver\Statement    {
 
         // File based query (sql template) 
         if ($input['sql_file']) {
@@ -297,7 +297,7 @@ class Core	{
             }
 	        $preparedStatement = $this->getDatabaseConnection()->prepare($fileContent);
         	$preparedStatement->execute();
-            $this->lastQuery = $fileContent;
+            $this->lastQuery[] = $fileContent;
         }
 
         // standard: sql build from typoscript setup
@@ -325,7 +325,7 @@ class Core	{
 
         	$preparedStatement = $this->getDatabaseConnection()->prepare($query);
         	$preparedStatement->execute();
-            $this->lastQuery = $query;
+            $this->lastQuery[] = $query;
         }
 
         return $preparedStatement;
