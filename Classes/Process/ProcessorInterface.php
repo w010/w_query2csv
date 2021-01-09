@@ -11,9 +11,9 @@ Interface ProcessorInterface	{
 
 	/**
 	 * @param array $params
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-    public function run(array $params, Core &$pObj): string;
+    public function run(array $params, Core &$Core): string;
 
 }

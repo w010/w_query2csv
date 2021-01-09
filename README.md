@@ -34,7 +34,7 @@ map uids to values, fill labels using values from related tables, or parsed in o
 
 
 
-## 2. FOR WHAT DO I NEED IT?
+## 2. WHAT FOR DO I NEED IT?
 
 If you have data set in db, eg. some orders or contest answers, that must be quick sent to someone by email, or 
 periodically downloaded by someone, or something like that, this extension is very useful.
@@ -86,30 +86,30 @@ This can be done like that:
 ```
 $content .= '<a href="'.GeneralUtility::linkThisUrl($_SERVER['REQUEST_URI'], array('action' => 'getfile', 'f' => 'my_file')) . '">download file</a>';
 
-if ($_GET['action'] == 'getfile')	{
-	require_once(ExtensionManagementUtility::extPath('w_query2csv').'Classes/Plugin/Export.php');
+// prepare file config
+$config_myFile = [
+	'files.' => [
+		'my_file.' => [
+			'input.' => [
+				'table' => 'tx_myext_table',
+				'fields' => 'uid, crdate, name, value',
+				'where' => 'type = 2',
+				'order' => 'uid DESC',
+				'limit' => 100,
+			],
+			'output.' => [
+				'filename' => 'mydata.csv',
+				'process_fields.' => [
+					'crdate' => 'WoloPl\WQuery2csv\Process\ParseDate',
+]]]]];
 
-	$conf = [
-		'debug_allowed' => 0,
-		'files.' => [
-				'my_file.' => [
-				'input.' => [
-					'table' => 'tx_myext_table',
-					'fields' => 'uid, crdate, name, value',
-					'where' => 'AND type = 2',
-					'order' => 'uid DESC',
-					'limit' => 100,
-				],
-				'output.' => [
-					'filename' => 'mydata.csv',
-					'process_fields.' => [
-						'crdate' => 'WoloPl\WQuery2csv\Process\ParseDate',
-	]]]]];
-
-	$Q2csv = GeneralUtility::makeInstance('tx_wquery2csv_export');
-
-	$Q2csv->main('', $conf);
-	// note, that the script now throws output and exits!
+if ($_GET['action'] === 'getfile')	{
+	// make core/file object
+	$Q2csvCore_myFile = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $config_myFile['files.']['my_file.']);
+	// render csv content
+	$csv = $Q2csvCore_myFile->getCsv()
+	// send file to client (note, that the script now throws output and exits)
+	GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Disposition::class)->sendFile($csv, $myCsvFileConfig['output.']);
 }
 ```
 
@@ -128,25 +128,26 @@ plugin.tx_wquery2csv_export  {
     files   {
         somestuff_orders  {
             input {
-              table = tx_somestuff_orders
-              fields = tstamp,name,email,phone,stuff_uid
-              where = category = 2
-              group =
-              order = tstamp DESC
-              limit =
-              enableFields = 1
+				table = tx_somestuff_orders
+				fields = tstamp,name,email,phone,stuff_uid
+				where = category = 2
+				group =
+				order = tstamp DESC
+				limit =
+				enableFields = 1
             }
             output {
-              filename = somestuff_orders.csv
-              separator = ,
-              encoding =
-              process_fields {
-                tstamp = WoloPl\WQuery2csv\Process\ParseDate
-              }
+				filename = somestuff_orders.csv
+				separator = ,
+				encoding =
+				process_fields {
+					tstamp = WoloPl\WQuery2csv\Process\ParseDate
+					tstamp.format = d.m.Y H:i
+				}
             }
         }
 
-        # .... (some other keys with input and output options to access file using ?f=some_other_key)
+        # .... (some other file keys with input/output options)
     }
 
     debug_allowed = 1
@@ -160,8 +161,8 @@ Above file is available using url param ?f=somestuff_orders.
 
 ### 4.2 Shortest working example:
 
-When you take a look at reference below, you'll see, that only db table is really required in configuration, so 
-shortest config would look like this:
+When you take a look at the reference below, you'll see, that only db table is really required in configuration, so 
+the shortest config would look like this:
 
 ```
 plugin.tx_wquery2csv_export.files.my_file.input.table = tx_sometable
@@ -270,8 +271,22 @@ _See more examples in Configuration/TypoScript/setup.ts_
 				if given class with optional ->methodName, this method will be called. else by default method ->process is called.
 				example:
 					10	{
-						class = NameSpace\MyExt\CsvExport\Postprocessor\DataPostprocessor->myMethod
+						class = NameSpace\MyExt\WQuery2csv\Postprocessor\DataPostprocessor->myMethod
 						someConfParam = myValue
+					}
+					
+			'additionalHeaders' (Array)		- additional headers to be sent with the file output 
+				example:
+					10 = Content-Type: application/octet-stream
+
+			'additionalHeadersProcessor' (String) - additional output headers processing class
+				example:
+					NameSpace\MyExt\WQuery2csv\OutputHeaders->sendHeaders
+					- php:
+					class OutputHeaders   {
+						public function sendHeaders(\WoloPl\WQuery2csv\Disposition &$Disposition, array $outputConfig): void	{
+        					header('Content-Type: application/octet-stream');
+						}
 					}
 
 		
@@ -372,24 +387,20 @@ If file key (?f=file_key) in url is not specified, plugin doesn't display any ou
 How to add own processing methods for field values?**
 
 > A:
-Write any Typo3-callable class with a run() public method with params ($params, &$pObj) and return a string.
+Write any Typo3-callable class with a ``run()`` public method with params ``($params, &$Core)`` and return a string.
 (Optionally you can use any method name and configure process using class->methodname)  
 In $params array you can expect to be passed:  
 	'value' - field value from db
 	'fieldName' - name of current processed field  
 	'row' - whole record of current item (I mean, fields which you set to read in .input.fields, if not "*")  
 	'conf' - typoscript configuration of this processor
-$pObj is a WoloPl\WQuery2csv\Core instance
+$Core is a WoloPl\WQuery2csv\Core instance
 
-> Best way is to just write your method in your extension, the same way like I did in w_query2csv/Classes/Process.php, and configure processing ts in standard namespace way.    
-In case you don't know what I mean: add your class in your own ext, respecting standard Typo3 path and naming convention to make the class be found using namespace  
-(like: class in file typo3conf/ext/my_ext/Classes/Extensions/WQuery2csv/Process.php = available by namespace MyNamespace\MyExt\Extensions\WQuery2csv\Process  
-write a processing method like that:
-
-> public function doSomethingWithValue($params, \WoloPl\WQuery2csv\Core &$pObj)    { return $myProcessedString }
-
-> and register using:  
-	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\Extensions\WQuery2csv\Process->doSomethingWithValue``  
+> Best way is to just make a new class in your extension, (respecting standard Typo3 path and naming convention to make the class be autoloaded)
+> the same way as I did in Classes/Process/yyyy.php, and configure typoscript giving your class namespace path.
+> (like: class file /my_ext/Classes/WQuery2csv/MyCustomProcessor.php = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor)  
+> Implement the \WoloPl\WQuery2csv\Process\ProcessorInterface to make things easier. Finally setup in your ts:  
+	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor``  
 	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field.someAdditionalOptionToPass = something``
 
 
@@ -422,25 +433,30 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 7. Migrate
 
-* from version 0.5.0
+* from version 0.6.x
+	- Core::config property was renamed to Core::file_config, so if you have your own processors (or xclasses),
+	  you may want to check if they used this property. This doesn't impact installations which uses only built-in features.
+	  Also, property Core::lastQuery was changed from type string to array (so it may collect also additional queries from processors)
+
+* from version 0.5.x
 	- process_fields: deprecated class Process is finally removed, so processing config like: ~~WoloPl\WQuery2csv\Process->\[processingMethod]~~
 	  doesn't work anymore. change to: ``WoloPl\WQuery2csv\Process\[ProcessingClass]`` (@see output.process_fields and ref in point 4.4)
 
 
-* from version 0.3.0
+* from version 0.3.x
 	- process_fields: processors are now in separate classes, so
-	  instead ``WoloPl\WQuery2csv\Process->parseDate`` use now:  ``WoloPl\WQuery2csv\Process\ParseDate``
-	  (also ``\Process->tableLabelsFromRecordsCommalist`` became: ``\Process\LabelsFromRecords``
-	   and ``\Process->tableLabelsFromMmRelations`` is now: ``\Process\LabelsFromMmRelations``)
+	  instead ~~WoloPl\WQuery2csv\Process->parseDate~~ use now:  ``WoloPl\WQuery2csv\Process\ParseDate``
+	  (also ~~\Process->tableLabelsFromRecordsCommalist~~ became: ``\Process\LabelsFromRecords``
+	   and ~~\Process->tableLabelsFromMmRelations~~ is now: ``\Process\LabelsFromMmRelations``)
 
 
 * from version 0.1.x
-	- typoscript setup key is now: ``plugin.tx_wquery2csv_export`` instead of ``plugin.tx_wquery2csv_pi1``
+	- typoscript setup key is now: ``plugin.tx_wquery2csv_export`` instead of ~~plugin.tx_wquery2csv_pi1~~
 	- the plugin content element embeded on page must be selected again for the same reason
 	- process_fields now expects full callable userfunc reference
-	- so, ``_process_parseDate`` option is now ``\WoloPl\WQuery2csv\Process\ParseDate``
-	- ``process_fields_user`` is now removed, use ``process_fields instead``, just like the rest
-	- output.where now need to be full, not starting from "AND" (1=1 is removed, so just remove this AND from beginning)
+	- so, ~~_process_parseDate~~ option is now ``\WoloPl\WQuery2csv\Process\ParseDate``
+	- ~~process_fields_user~~ is now removed, use ``process_fields`` instead, just like the rest
+	- output.where now need to be full, not starting from "AND" (1=1 is removed, so just remove the AND from beginning)
 
 
 
@@ -450,7 +466,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 - 'USERFUNC' field value: change parameters array passed to userfunc, keys: 'field' -> 'fieldName', 'data' -> 'row'. old names will be still working for some time, in future would be removed
 - q3i mods are now integrated since 0.4.0, so ts needs to be changed:  
-	- input.q3i.postprocessors  ->  output.postprocessors_row (it is actually output option, so I moved it where it becomes)  
+	- input.q3i.postprocessors  ->  output.postprocessors_row (it is actually output option, so I moved it where it belongs)  
     - input.q3i.sql_file  ->  input.sql_file  
     - input.q3i.sql_markers  ->  input.sql_markers
 - nbr -> strip_linebreaks, hsc -> htmlspecialchars
@@ -459,9 +475,17 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 9. ChangeLog
 
+##### 0.6.1
+- [minor breaking] Core::config property was renamed to Core::file_config (might impact your custom processors or xclasses) 
+- New options: output.additionalHeaders, output.additionalHeadersProcessor
+- File delivery was extracted to its own Disposition object, for more control of output and better extendability 
+- Some old long-deprecated options (hsc, nbr) now triggers deprecation log/error 
+
 ##### 0.6.0
-- TYPO3 10.4 / doctrine compatibility
-- removed deprecated general Process class
+- TYPO3 10.4 / full Doctrine compatibility - no more typo3db_legacy
+- Removed deprecated old general Process class
+- New processor: PregReplace
+- Processors now implements processor interface (but it's not yet mandatory when writing own)
 
 ##### 0.5.0
 - TYPO3 9.5 compatibility (needs typo3db_legacy to be installed, no doctrine support yet)

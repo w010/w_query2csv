@@ -16,7 +16,7 @@ $EM_CONF[$_EXTKEY] = [
 	'description' => 'This extension provides download points for predefined database queries to customized CSV files. If you have some data stored in db, that must be quick sent to someone, periodically downloaded by someone,
 and the fields parsed for readability, this extension is very useful. It\'s simple and easy to configure.',
 	'category' => 'plugin',
-	'version' => '0.6.0',
+	'version' => '0.6.1',
 	'state' => 'stable',
 	'uploadfolder' => 0,
 	'createDirs' => '',

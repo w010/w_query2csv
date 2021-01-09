@@ -42,10 +42,10 @@ class PregReplace implements ProcessorInterface	{
 	 * Performs regular expression replacement using preg_replace
 	 *
 	 * @param array $params: array 'pattern' (string) - regexp pattern, 'replacement' (string) - replacement, 'limit' (int) - max replacements (see preg_replace manual)
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-    public function run(array $params, Core &$pObj): string {
+    public function run(array $params, Core &$Core): string {
 		$conf = $params['conf'];
 	    if (!$conf['pattern'])
 	        return (string) $params['value'];

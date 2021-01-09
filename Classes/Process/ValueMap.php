@@ -27,6 +27,7 @@ namespace WoloPl\WQuery2csv\Process;
 use WoloPl\WQuery2csv\Core;
 
 
+
 /**
  * Process value: Value map
  *
@@ -41,10 +42,10 @@ class ValueMap implements ProcessorInterface	{
 	 * Replace with predefined value from given map array. If not found, return original
 	 *
 	 * @param array $params: array 'map' - [oldValue = New Value] pairs
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-    public function run(array $params, Core &$pObj): string {
+    public function run(array $params, Core &$Core): string {
 		$conf = $params['conf'];
 	    if (!$conf['map.'])
 		    $conf['map.'] = [];

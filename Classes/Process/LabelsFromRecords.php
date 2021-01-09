@@ -27,6 +27,7 @@ namespace WoloPl\WQuery2csv\Process;
 use WoloPl\WQuery2csv\Core;
 
 
+
 /**
  * Process value: Labels from fields from table's records with given uids
  *
@@ -46,10 +47,10 @@ class LabelsFromRecords implements ProcessorInterface	{
 	 * params[conf][useValueFromField] - string - instead of current field's value, use another column from current row
 	 *
 	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-	public function run(array $params, Core &$pObj): string    {
+	public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'];
 
 		if (!$conf['table']  ||  !$conf['field'])
@@ -72,9 +73,9 @@ class LabelsFromRecords implements ProcessorInterface	{
             . ' WHERE uid IN (' . implode(',', array_map('intval', explode(',', $value))) . ')'
             . $conf['additional_where'];
         
-        $preparedStatement = $pObj->getDatabaseConnection()->prepare($query);
+        $preparedStatement = $Core->getDatabaseConnection()->prepare($query);
         $preparedStatement->execute();
-        $pObj->lastQuery[] = $query;
+        $Core->lastQuery[] = $query;
 
         while(($row = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
 			$labels[] = $row[ $conf['field'] ];

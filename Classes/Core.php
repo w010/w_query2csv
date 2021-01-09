@@ -28,7 +28,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-use TYPO3\CMS\Frontend\Plugin\AbstractPlugin;
 
 
 /**
@@ -45,10 +44,10 @@ class Core	{
     *
     * @var array
     */
-	public $config = [];
+	public $file_config = [];
 
 	/**
-	* Stored last select query
+	* Stored queries
 	*
 	* @var array
 	*/
@@ -70,36 +69,30 @@ class Core	{
 	/**
 	 * Construct
 	 *
-	 * @param AbstractPlugin|Object $pObj
+	 * @param Object $pObj - (basically not used for anything anymore. it may be AbstractPlugin or other object, Core is meant to be used from any context)
 	 * @param array $file_config
 	 */
-	public function __construct(&$pObj, array $file_config)   {
-
-		$this->_init($pObj);
-        $this->config = $file_config;
-
-        if ($this->config['disable'])  {
-            die ('file is disabled.');
-        }
-
-        // for security reasons, don't allow to export tables like fe/be users
-        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']['not_allowed_tables'], $this->config['input.']['table']))   {
-            die ('table not allowed.');
-        }
+	public function __construct(Object &$pObj, array $file_config)   {
+        $this->pObj = $pObj;
+        $this->file_config = $file_config;
+		$this->_init();
     }
 
 
 	/**
-	 * Initialize object
-	 * (it may not always be AbstractPlugin, Core is meant to be used from any context)
-	 * @param AbstractPlugin|Object $pObj
+	 * Initialize
 	 */
-    protected function _init(&$pObj): void  {
-		$this->pObj = $pObj;
-		if (is_object($pObj->cObj))
-			$this->cObj = $pObj->cObj;
-		else
-			$this->cObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+    protected function _init(): void  {
+        $this->cObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+        
+        if ($this->file_config['disable'])  {
+            die ('file is disabled.');
+        }
+
+        // for security reasons, don't allow to export tables like fe/be users
+        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']['not_allowed_tables'], $this->file_config['input.']['table']))   {
+            die ('table not allowed.');
+        }
     }
 
 
@@ -109,8 +102,8 @@ class Core	{
     * @return string $csv - csv file content
     */
     public function getCsv(): string     {
-        $input = $this->config['input.'];
-        $output = $this->config['output.'];
+        $input = $this->file_config['input.'];
+        $output = $this->file_config['output.'];
 
         $counter = 0;
 	    $csv = '';
@@ -122,6 +115,16 @@ class Core	{
         if (!isset($input['fields']))           $input['fields'] = '*';
         if (!isset($output['separator']))       $output['separator'] = ',';
         if (!isset($output['quote']))           $output['quote'] = '"';
+        
+        
+        if ($output['hsc']) {
+            $output['htmlspecialchars'] = 1;
+            trigger_error('W_query2csv: option output.hsc is deprecated. Use output.htmlspecialchars instead', E_USER_DEPRECATED);
+        }
+        if ($output['nbr']) {
+            $output['strip_linebreaks'] = 1;
+            trigger_error('W_query2csv: option output.nbr is deprecated. Use output.strip_linebreaks instead', E_USER_DEPRECATED);
+        }
 
 
         // database read
@@ -204,12 +207,12 @@ class Core	{
 	            foreach ($fields as $fieldKey => $fieldValue) {
 
 					// apply htmlspecialchars
-					if ($output['htmlspecialchars'] || $output['hsc'])  {
+					if ($output['htmlspecialchars'])  {
 						$fieldValue = htmlspecialchars($fieldValue);
 					}
 
 					 // if set, linebreaks are removed (changed to space) from value
-		            if ($output['strip_linebreaks'] || $output['nbr'])  {
+		            if ($output['strip_linebreaks'])  {
 			            $fieldValue = preg_replace("/\r|\n/s", " ", $fieldValue);
 		            }
 

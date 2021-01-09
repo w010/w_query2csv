@@ -74,11 +74,11 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
         	$this->_setFileConfig();
 
 	        // create core object
-	        $core = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $this->file_config);
+	        $Core = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $this->file_config);
 
 	        if ($this->file_key)    {
 	            // get data
-	            $csv = $core->getCsv();
+	            $csv = $Core->getCsv();
 	        }
 	        else    {
 	        	return '<!-- '.$this->prefixId. ': no file key given, nothing to do, exiting -->';
@@ -88,42 +88,21 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
         }
 
 
-		$currentApplicationContext = \TYPO3\CMS\Core\Core\Environment::getContext();
         // debugging with ?debug=1 in url: on dev context automatically available, on other needs to be configured in ts to enable
         if (	(GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
-			||  (GeneralUtility::_GP('debug')  &&  $currentApplicationContext->isDevelopment())
+			||  (GeneralUtility::_GP('debug')  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment())
         ){
 
             print '<pre>';
             print_r($this->file_config);
 	        print '<br>';
-	        print_r($core->lastQuery);
+	        print_r($Core->lastQuery);
 	        print '<br><br>';
 	        print $csv;
 	        print '</pre>';
         }
         else if ($csv)    {
-
-            // set output headers
-            //header('Content-type: text/csv; charset=' . ($this->file_config['output.']['charset'] ? $this->file_config['output.']['charset'] : 'utf-8'));
-            //header('Content-disposition: attachment; filename=' . $this->file_config['output.']['filename']);
-
-            // todo: check if strlen is sure enough - shouldn't it be mb_strlen? is this length header really necessary here?
-            // in case some problems with not complete output it may be this Content-Length
-			$len = strlen($csv);
-			header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-            header('Content-Type: text/csv; charset=' . ($this->file_config['output.']['charset'] ? $this->file_config['output.']['charset'] : 'utf-8'));
-            header('Content-Disposition: attachment; filename=' . $this->file_config['output.']['filename']);
-            header('Content-Length: ' . "$len;\n");
-            // for ie problem:
-            header('Pragma: private');
-			header('Cache-Control: private, must-revalidate');
-            // var_dump(headers_list());
-
-            // output content
-            print $csv;
-            // from q3i version - is this needed like that?
-	        //print utf8_decode($csv);
+            GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Disposition::class)->sendFile($csv, $this->file_config['output.']);
         }
         else    {
             print 'Error: no data to output';
@@ -179,7 +158,6 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
         // check if _default key is configured in TS
         $this->file_key = '_default';
-	    $this->_setFileConfig();
 
 	    // if no default config, use some hardcoded settings... in general never used, but someday you may need to
 	    // mod this ext, if it won't fit all your needs, so this section may be a good start
@@ -201,7 +179,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
                     'filename' => 'order.csv',
                     'separator' => ',',
                     'charset' => 'UTF-8',
-                    'process_fields.' => ['tstamp' => \WoloPl\WQuery2csv\Process\parseDate::class],   // field => methodname
+                    'process_fields.' => ['tstamp' => \WoloPl\WQuery2csv\Process\ParseDate::class],   // field => ProcessClass
                 ]*/
             ];
         }

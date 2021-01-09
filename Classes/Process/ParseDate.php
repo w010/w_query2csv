@@ -27,6 +27,7 @@ namespace WoloPl\WQuery2csv\Process;
 use WoloPl\WQuery2csv\Core;
 
 
+
 /**
  * Process value: Parse date
  *
@@ -41,10 +42,10 @@ class ParseDate implements ProcessorInterface	{
 	 * Format date timestamp
 	 *
 	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string - parsed date
 	 */
-	public function run(array $params, Core &$pObj): string    {
+	public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'];
 		if (!$conf['format'])
 			$conf['format'] = 'Y.m.d H:i';

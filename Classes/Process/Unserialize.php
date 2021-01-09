@@ -27,6 +27,7 @@ namespace WoloPl\WQuery2csv\Process;
 use WoloPl\WQuery2csv\Core;
 
 
+
 /**
  * Process value: Unserialize
  *
@@ -43,10 +44,10 @@ class Unserialize implements ProcessorInterface	{
      * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
 	 *
 	 * @param array $params: 'value' - serialized string, 'conf' array with 'delimiter'
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-	public function run(array $params, Core &$pObj): string    {
+	public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'];
 
 		$lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);

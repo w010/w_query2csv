@@ -27,6 +27,7 @@ namespace WoloPl\WQuery2csv\Process;
 use WoloPl\WQuery2csv\Core;
 
 
+
 /**
  * Process value: Static value
  *
@@ -41,10 +42,10 @@ class StaticValue implements ProcessorInterface	{
 	 * Set static value given in 'value' key of params array
 	 *
 	 * @param array $params: string 'value', array 'conf', array 'row', string 'fieldname'
-	 * @param Core $pObj
+	 * @param Core $Core
 	 * @return string
 	 */
-	public function run(array $params, Core &$pObj): string {
+	public function run(array $params, Core &$Core): string {
 		return (string) $params['conf']['value'];
 	}
 
