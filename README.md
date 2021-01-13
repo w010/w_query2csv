@@ -22,12 +22,29 @@ Hint Intermedia
 
 ## 1. WHAT IS THIS?
 
-It's an extension to provide quick exporting of database tables/queries to CSV files. You may configure files 
-which will be available, for every file using their own settings, select different table, fields which will be 
-exported, standard parts of MySQL query, file charset, csv fields separator and more. Also you can use sql template
-files to prepare complicated predefined queries. All that is fast and easy, using included example TypoScript.  
-Selected data fields may be processed with own or built-in methods, like timestamp to human-readable date,
-map uids to values, fill labels using values from related tables, or parsed in other way.  
+It's a simple but powerful CSV generator, in general it renders CSV data from preconfigured input source, which may be SQL built from TypoScript setup,
+given query, or SQL templates, to prepare complicated predefined joins, etc.
+Queries may be static, dynamically generated, preprocessed or marker-filled. The data rows and cells may be processed/converted/parsed before output.
+You can use some built-in processors, like autoconvert timestamp to human-readable date, map uids to values, fill labels using values from related tables,
+preg replace, or parse in some other way. In a minute you can make a custom processor to do whatever you need.
+Prepare and keep any number of file configs which will be available, each configured what-to-read and how-to-output.
+
+But if you need simple thing, there's no need to dig in-deep in all these settings, you can go minimalistic and try out the simpliest one-option config,
+which is basically to set an input table name. That's enough to get a download point with a beautiful shiny CSV file built from that table.
+
+You can get the final output in several ways: - insert a plugin wrapper element on a page and then call url with file key, to download a file configured
+in Typoscript, - create your Scheduler task to build CSV from PHP array configuration, - integrate generator in your own extension and do anything with it.
+
+
+NOTE, that for now there's no general-use nice templated frontend plugin included - only the simple wrapper which triggers file download. That means, currently
+there's NO built-in possibility to just insert a templated-fancy-content-element to get a list of friendly typolinks to files available etc.
+(you must write the url manually to be able to download file in frontend - you can of course put that url into text contents, but keep in mind - you're doing this on your own)
+The main reason is that the ext was meant to be used by admins/editors, not frontend users. This extension by it's nature was born as a low-level admin tool,
+and exposing such thing to the whole world without any access control, if someone didn't check twice what data is available through it, maybe is not such a good idea.
+So I never wrote that part (also I never needed). Maybe it will come in future.
+You can provide it by yourself, ie. writing Fluid template with custom viewhelper which makes the list, or own plugin (but take a good care of what you allow and what users can see).
+
+
 
 
 	PLEASE SEE "SECURITY" SECTION BEFORE USE!
@@ -58,6 +75,8 @@ Simply insert plugin on a new page named eg. 'CSV export' and configure input an
 A Backend Section type page is good idea, you may want to control download access for backend non-admin users.
 To download file, you call page url + file id using _?f=[configuration_key]_, like that:  
 http://example.com/csv_export.html?f=somestuff_orders
+
+NOTE, that embeding this plugin causes that specific page not being cached!
 
 
 Note, that this plugin's output is not based on standard TYPO3 page type handling, but sends headers and sends output
@@ -168,14 +187,14 @@ the shortest config would look like this:
 plugin.tx_wquery2csv_export.files.my_file.input.table = tx_sometable
 ```
 
-> Explaining:  
+> Explanation:  
 file key “**my_file**” has set input table to “**tx_sometable**” (and plugin is inserted on _download_csv_ page)  
 so:  
 the csv file containing records from this table will be accessed using: [download_csv.html]?f=my_file  
 and:  
 prompted to download as my_file.csv  
 
-The easiest way to quick configure is to just copy example config from above.
+The easiest way to quickly configure is to just copy example config from above.
 
 _See more examples in Configuration/TypoScript/setup.ts_
 
@@ -551,5 +570,45 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 		}
 	}
 
+
+
+
+
+
+## 11. Check my other TYPO3 stuff:
+
+### - TYPO3 - BE/FE/Env Handy Switcher
+
+Chrome extension - Magic server teleporter. Extreme workflow accelerator. For jumping between projects
+instances / servers / frontend / backend. Has many useful features (most of them optional) like marking current
+instance by colored favicon and badge, wide project management with team share features.  
+It's very helpful on everyday basis, if you work with dozens of projects on a number of dev/staging environments
+and need to move fast between them not search every time for an url to each one.
+
+https://github.com/w010/chrome-typo3-switcher
+https://chrome.google.com/webstore/detail/typo3-befeenv-handy-switc/ohemimdlihjdeacgbccdkafckackmcmn
+
+
+### - DUMP
+
+Damn Usable Management Program for TYPO3
+Originally a database import/export and backup utility, now a tool for a number of Typo3 system operations
+for devs and integrators.  
+Functions: Database dump, full migration pack, backup, domains update, missing files fetcher, database
+manual query quick exec, system actions, quick xclass generator.
+
+https://github.com/w010/DUMP
+
+
+
+### - TYPO3 Content Summary
+
+Simple, but extremely helpful script to make a summary and visualize tt_content use in a TYPO3 installation.  
+Helps to track & analyse content types / plugin instances / header types / frames / image orient / tv fce,
+especially when you're going to make a major system update and have to take care of all plugins, migrate
+csc -> fsc / other incompatibilities between Typo3 branches. Here you can see where all your customized ts csc
+wraps are actually used (and if they're still needed).
+
+https://github.com/w010/contentsummary
 
 

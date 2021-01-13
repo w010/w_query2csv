@@ -12,9 +12,11 @@
 
 
 $EM_CONF[$_EXTKEY] = [
-	'title' => 'Export database/query to a CSV',
-	'description' => 'This extension provides download points for predefined database queries to customized CSV files. If you have some data stored in db, that must be quick sent to someone, periodically downloaded by someone,
-and the fields parsed for readability, this extension is very useful. It\'s simple and easy to configure.',
+	'title' => 'Export database/query to CSV',
+	'description' => 'This is a CSV generator, which combines simplicity with high configurability and data processing powers. It provides download points
+for your preconfigured database queries dumped to customized CSV files. If you have some data collected in database tables, which must be periodically, like, downloaded by admins,
+sent to external CRM, where some raw values must be converted to something meaningful, like uids replaced with labels from relations, timestamps visualized, arrays deserialized,
+this extension is very useful. It\'s simple and easy to configure, but very flexible with input/output settings and scalability.',
 	'category' => 'plugin',
 	'version' => '0.6.1',
 	'state' => 'stable',
