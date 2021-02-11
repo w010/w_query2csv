@@ -69,13 +69,14 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
         $this->file_key = GeneralUtility::_GP('f');
 
+        // set config
+        $this->_setFileConfig();
+
+        // create core object
+        $Core = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $this->file_config);
+
+
         try {
-            // set config
-        	$this->_setFileConfig();
-
-	        // create core object
-	        $Core = GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Core::class, $this, $this->file_config);
-
 	        if ($this->file_key)    {
 	            // get data
 	            $csv = $Core->getCsv();
@@ -84,22 +85,32 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	        	return '<!-- '.$this->prefixId. ': no file key given, nothing to do, exiting -->';
 	        }
         } catch (Exception $exception)  {
+            if ($this->isDebugEnabled())    {
+                if ($this->file_config['input.']['q3i.'])   {
+                    print "Error - Configuration option input.q3i. is set, which is not supported since version 0.4. See manual -> Migrate<br><br>";
+                }
+                if (!$this->file_config['input.']['table'] && !$this->file_config['input.']['sql_file']){
+                    print "Error - Configuration incomplete - at least .input.table or input.sql_file is needed to be set<br><br>";
+                    
+                }
+                print "<pre>";
+                print "<br><br>FILE CONFIG:<br><br>";
+                var_export($this->file_config);
+                print "<br><br>LAST QUERY:<br><br>";
+                var_export($Core->lastQuery);
+                die("<br><br>Exception: ".$this->prefixId . ': ' . $exception->getMessage());
+            }
 	        return $this->prefixId . ': ' . $exception->getMessage();
         }
-
-
         // debugging with ?debug=1 in url: on dev context automatically available, on other needs to be configured in ts to enable
-        if (	(GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
-			||  (GeneralUtility::_GP('debug')  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment())
-        ){
-
+        if ($this->isDebugEnabled())    {
             print '<pre>';
             print_r($this->file_config);
-	        print '<br>';
-	        print_r($Core->lastQuery);
-	        print '<br><br>';
-	        print $csv;
-	        print '</pre>';
+            print '<br>';
+            print_r($Core->lastQuery);
+            print '<br><br>';
+            print $csv;
+            print '</pre>';
         }
         else if ($csv)    {
             GeneralUtility::makeInstance(\WoloPl\WQuery2csv\Disposition::class)->sendFile($csv, $this->file_config['output.']);
@@ -112,6 +123,15 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
         // so we may now exit the script after output
         exit;
 	}
+
+
+    /**
+     * @return bool
+     */
+	protected function isDebugEnabled()  {
+	    return (GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
+			||  (GeneralUtility::_GP('debug')  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment());
+    }
 
 
 	/**

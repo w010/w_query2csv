@@ -326,9 +326,9 @@ class Core	{
                 . ($input['order'] ? ' ORDER BY ' . $input['order'] : '')
                 . ($input['limit'] ? ' LIMIT ' . $input['limit'] : '');
 
+            $this->lastQuery[] = $query;
         	$preparedStatement = $this->getDatabaseConnection()->prepare($query);
         	$preparedStatement->execute();
-            $this->lastQuery[] = $query;
         }
 
         return $preparedStatement;
