@@ -52,6 +52,7 @@ class LabelsFromRecords implements ProcessorInterface	{
 	 */
 	public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'];
+		$value = $params['value'];
 
 		if (!$conf['table']  ||  !$conf['field'])
 			return __METHOD__ . '() - NO TABLE OR FIELD SPECIFIED!';

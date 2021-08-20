@@ -471,7 +471,8 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 * from version 0.1.x
 	- typoscript setup key is now: ``plugin.tx_wquery2csv_export`` instead of ~~plugin.tx_wquery2csv_pi1~~
-	- the plugin content element embeded on page must be selected again for the same reason
+	- the plugin content element embeded on page must be selected again for the same reason - or run migrate query:
+		UPDATE `tt_content`  SET list_type = "w_query2csv_export"  WHERE list_type = 'w_query2csv_pi1';
 	- process_fields now expects full callable userfunc reference
 	- so, ~~_process_parseDate~~ option is now ``\WoloPl\WQuery2csv\Process\ParseDate``
 	- ~~process_fields_user~~ is now removed, use ``process_fields`` instead, just like the rest
@@ -493,6 +494,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.2
+- Config validation, debug/migration improvements
 
 ##### 0.6.1
 - [minor breaking] Core::config property was renamed to Core::file_config (might impact your custom processors or xclasses) 
