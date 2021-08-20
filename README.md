@@ -293,6 +293,14 @@ _See more examples in Configuration/TypoScript/setup.ts_
 						class = NameSpace\MyExt\WQuery2csv\Postprocessor\DataPostprocessor->myMethod
 						someConfParam = myValue
 					}
+			
+			'postprocessors_header' (Array)	- postprocess header row labels, to replace db fieldnames with your fancy labels
+				if given class specified with optional ->methodName, this method will be called. else by default method ->process is called.
+				example:
+					10	{
+						class = NameSpace\MyExt\WQuery2csv\Postprocessor\HeaderPostprocessor->myMethod
+						someConfParam = myValue
+					}
 					
 			'additionalHeaders' (Array)		- additional headers to be sent with the file output 
 				example:
@@ -495,6 +503,13 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 9. ChangeLog
 
+##### 0.6.4
+- Feature: header row labels userfunc postprocessing
+- Composer.json added
+
+##### 0.6.3
+- Minor fix in one of optional postprocessors
+
 ##### 0.6.2
 - Config validation, debug/migration improvements
 
@@ -551,30 +566,50 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 10. More examples
+```typo3_typoscript
 
-	plugin.tx_wquery2csv_export.files  {
-		test	{
-			input	{
-				table = tx_news_domain_model_news
-				limit = 3
-				fields = uid,title
-			}
-	
-			output	{
-				add_fields = cat_internal
-				process_fields	{
-					cat_internal = WoloPl\WQuery2csv\Process\LabelsFromMmRelations
-					cat_internal	{
-						table = sys_category
-						table_mm = sys_category_record_mm
-						field = title
-					}
-				}
-			}
-		}
-	}
+    plugin.tx_wquery2csv_export.files  {
+        test    {
+            input    {
+                table = tx_news_domain_model_news
+                limit = 3
+                fields = uid,title
+            }
+    
+            output    {
+                add_fields = cat_internal
+                process_fields    {
+                    cat_internal = WoloPl\WQuery2csv\Process\LabelsFromMmRelations
+                    cat_internal    {
+                        table = sys_category
+                        table_mm = sys_category_record_mm
+                        field = title
+                    }
+                }
+            }
+        }
+    }
+```
 
+Header postprocess userfunc example:
+```php
+    namespace Q3i\Q3iewContest\CsvExport\Postprocessor;
 
+    class HeaderPostprocessor   {        
+
+        /**
+         * Takes 'config' and 'data' keys in $config array, returns $config['data']
+         * @param $config array
+         * @param $pObj \WoloPl\WQuery2csv\Core
+         * @return array
+         */
+        public function myMethod($config, &$pObj) {
+            $headerlabels = $config['data'];
+            $headerlabels['current_label'] = 'Nice label';
+            return $headerlabels;
+        }
+    }
+```
 
 
 
