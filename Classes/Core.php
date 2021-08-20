@@ -250,9 +250,26 @@ class Core	{
         }
 
 	    if (!$output['no_header_row']) {
-		    //$csv_header = implode($output['separator'], $fieldNames) . "\r\n";
+	        $headerRowLabels = $fieldNames;
+			// postprocess header row - fieldnames / labels
+			if (is_array($output['postprocessors_header.'])) {
+				foreach ($output['postprocessors_header.'] as $key => $config) {
+					$userFuncDef = $config['class'];
+					if (!strstr($userFuncDef, '->')) {
+						// method not specified
+						$userFuncDef .= '->process';
+					}
+					$userFuncParams = [
+						'config' => $config,
+                        // make labels array combined with keys: [label]=>'label', instead of numerical keys, to easy override values in userfunc
+						'data' => array_combine($headerRowLabels, $headerRowLabels),
+					];
+					$headerRowLabels = GeneralUtility::callUserFunction($userFuncDef, $userFuncParams, $this);
+				}
+			}
+
 		    $csv_header = $output['quote']
-			    . implode($output['quote'] . $output['separator'] . $output['quote'], $fieldNames)
+			    . implode($output['quote'] . $output['separator'] . $output['quote'], $headerRowLabels)
 			    . $output['quote'] . "\n";
 	    }
 
