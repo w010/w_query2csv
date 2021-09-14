@@ -362,6 +362,9 @@ _See more examples in Configuration/TypoScript/setup.ts_
 		config:
 			.delimiter = [string] - may be anything, also you can use special keywords: -LINEBREAK- and -SPACE-. defaults to linebreak
 			.lineBreakType = [string] - if use linebreak, may be configured to use CR, LF or CRLF. defaults to LF
+			.returnJson = [bool/int] - get the whole array as json instead of formatted text. can be used later for some processing 
+			.mergeAsColumns = [bool/int] - inserts the unserialized array items as new columns to csv output (also forces returnJson) 
+				(consider unsetting (remove_fields) such field's original value from standard output) 
 
 	
 	LabelsFromRecords - Generate string with some values from related records, using uid-commalist, like, ie. titles of referenced categories
@@ -502,6 +505,10 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.5
+- Feature: array items from the Unserialize processor can be now merged to csv output as new columns (mergeAsColumns)
+- Feature: Unserialize processor can now return json, instead of the original formatted values text (returnJson)
 
 ##### 0.6.4
 - Feature: header row labels userfunc postprocessing

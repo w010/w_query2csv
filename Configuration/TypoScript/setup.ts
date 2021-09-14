@@ -1,6 +1,10 @@
-# note, that the typoscript below is not to be included as-is
-# these are just examples how to use it.
-# you need to copy this to your template setup and fine-tune to your needs
+
+
+# NOTE, THAT THE TYPOSCRIPT BELOW IS NOT MEANT TO BE INCLUDED AS-IS
+# THESE ARE JUST EXAMPLES HOW TO USE IT.
+
+# copy to your template setup and fine-tune to your needs
+
 
 # REMEMBER that it may not be safe to allow exporting any database tables, so THINK WHAT ARE YOU DOING
 
@@ -18,7 +22,36 @@ plugin.tx_wquery2csv_export.files.my_file.input.table = tx_sometable
 #
 plugin.tx_wquery2csv_export  {
 	files {
-		somestuff_orders {
+		example_orders {
+			input {
+				table = tx_somestuff_orders
+				fields = *
+				where = category = 2
+				order = tstamp DESC
+				default_enableColumns = 1
+			}
+
+			output {
+				filename = somestuff-myorders-monthly.csv
+				process_fields {
+					tstamp = WoloPl\WQuery2csv\Process\ParseDate
+					tstamp.format = d.m.Y H:i
+				}
+			}
+		}
+	}
+
+    # to use on non-dev environments. on context = development it works automatically.
+	debug_allowed = 0
+}
+
+
+
+# advanced:
+#
+plugin.tx_wquery2csv_export  {
+	files {
+		example_orders_advanced {
 			input {
 				table = tx_somestuff_orders
 				fields = tstamp,name,email,phone,stuff_uid
@@ -36,7 +69,7 @@ plugin.tx_wquery2csv_export  {
 				filename = somestuff-myorders-monthly.csv
 				#separator = ,
 				#encoding =
-				#hsc = 0
+				#htmlspecialchars = 0
 				#no_header_row = 0
 				process_fields {
 					tstamp = WoloPl\WQuery2csv\Process\ParseDate
@@ -57,6 +90,7 @@ plugin.tx_wquery2csv_export  {
 		}
 	}
 
+    # to use on non-dev environments. on context = development it works automatically.
 	debug_allowed = 0
 	
 	# instead of setting files.somefile and calling ?f=somefile you can configure files._default and set this to 1.
@@ -66,6 +100,8 @@ plugin.tx_wquery2csv_export  {
 
 
 
+
+# alternative use:
 
 # page type example:
 #

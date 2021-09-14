@@ -183,6 +183,14 @@ class Core	{
 	                    $value = GeneralUtility::callUserFunction($userFuncDef, $userFuncParams, $this);
                     }
 
+                    // if we want to add the unserialized array to the csv as new columns (merge with current fields) we need it as an array. 
+                    // the Unserialize processor handles this by itself - with mergeAsColumns=1 it automatically returns json
+                    if ($output['process_fields.'][$field.'.']['mergeAsColumns'])    {
+                        $mergeColumns = \GuzzleHttp\json_decode($value,true);
+                        if (is_array($mergeColumns)) {
+                            $fields = array_merge($fields, $mergeColumns);
+                        }
+                    }
                     $fields[$field] = $value;
                 }
 

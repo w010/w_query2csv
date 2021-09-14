@@ -58,6 +58,12 @@ class Unserialize implements ProcessorInterface	{
         $conf['delimiter'] = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $conf['delimiter']);
 
         $array = unserialize($params['value']);
+
+        // for mergeAsColumns we need the whole unserialized array, but this method always returns string, so use json as well 
+        if ($conf['returnJson'] || $conf['mergeAsColumns']) {
+            return \GuzzleHttp\json_encode($array);
+        }
+
 	    $out = '';
         foreach (is_array($array) ? $array : [] as $key => $val)	{
         	$out .= "$key: $val" . $conf['delimiter'];
