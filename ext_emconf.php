@@ -18,7 +18,7 @@ for your preconfigured database queries dumped to customized CSV files. If you h
 sent to external CRM, where some raw values must be converted to something meaningful, like uids replaced with labels from relations, timestamps visualized, arrays deserialized,
 this extension is very useful. It\'s simple and easy to configure, but very flexible with input/output settings and scalability.',
 	'category' => 'plugin',
-	'version' => '0.6.5',
+	'version' => '0.6.6',
 	'state' => 'stable',
 	'uploadfolder' => 0,
 	'createDirs' => '',
@@ -28,12 +28,21 @@ this extension is very useful. It\'s simple and easy to configure, but very flex
 	'author_company' => 'wolo.pl \'.\' studio, Q3i',
 	'constraints' => [
 		'depends' => [
-			'typo3' => '9.5.0-10.4.99',
+			'typo3' => '9.5.0-11.5.99',
 		],
 		'conflicts' => [
 		],
 		'suggests' => [
 		],
 	],
+    // this overrides the whole "autoload" from composer.json, it doesn't merge! keep in sync or remove from here
+    'autoload' => [
+        'psr-4' => [
+            'WoloPl\\WQuery2csv\\' => 'Classes/'
+        ],
+        'classmap' => [
+            'Classes/Plugin/Export.php'
+        ]
+    ],
 ];
 

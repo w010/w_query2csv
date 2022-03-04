@@ -5,7 +5,7 @@ readme / manual
 
 
 wolo.pl '.' studio  
-2009 - 2021
+2009 - 2022
 wolo.wolski (at) gmail (dot) com
 
 
@@ -505,6 +505,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.6
+- 11.x compatibility
 
 ##### 0.6.5
 - Feature: array items from the Unserialize processor can be now merged to csv output as new columns (mergeAsColumns)

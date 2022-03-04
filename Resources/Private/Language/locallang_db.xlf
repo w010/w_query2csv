@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2015-10-13T20:52:44Z" product-name="w_query2csv">
+		<header/>
+		<body>
+			<trans-unit id="tt_content.list_type_export" xml:space="preserve">
+				<source>Export database query to CSV file</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
