@@ -1,5 +1,5 @@
 <?php
-defined('TYPO3_MODE')  OR  die ('Access denied.');
+defined('TYPO3_MODE')  OR  defined('TYPO3')  OR  die ('Access denied.');
 
 // todo: migrate to 'EXTENSIONS'
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [

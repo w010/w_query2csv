@@ -4,8 +4,8 @@ w_query2csv
 readme / manual
 
 
-wolo.pl '.' studio  
-2009 - 2022
+wolo '.' studio  
+2009 - 2024
 wolo.wolski (at) gmail (dot) com
 
 
@@ -505,6 +505,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.7
+- 12.x compatibility
 
 ##### 0.6.6
 - 11.x compatibility

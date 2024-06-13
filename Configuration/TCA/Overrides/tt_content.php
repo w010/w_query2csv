@@ -1,5 +1,5 @@
 <?php
-defined('TYPO3_MODE')  OR  die ('Access denied.');
+defined('TYPO3_MODE')  OR  defined('TYPO3')  OR  die ('Access denied.');
 
 
 $GLOBALS['TCA']['tt_content']['types']['list']['subtypes_excludelist']['w_query2csv_export'] = 'layout,select_key';
