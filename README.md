@@ -504,6 +504,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ##### 0.6.7
 - 12.x compatibility
+- php 8 fixes
+- removed long deprecated conf settings nbr and hsc
+- drop support for older TYPO3
 
 ##### 0.6.6
 - 11.x compatibility
