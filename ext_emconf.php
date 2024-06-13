@@ -28,7 +28,7 @@ this extension is very useful. It\'s simple and easy to configure, but very flex
 	'author_company' => 'wolo.pl \'.\' studio, Q3i',
 	'constraints' => [
 		'depends' => [
-			'typo3' => '12.4.99',
+			'typo3' => '12.4.0-12.4.99',
 		],
 		'conflicts' => [
 		],
