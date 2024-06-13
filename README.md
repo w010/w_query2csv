@@ -1,10 +1,10 @@
 # Dump SQL table/query to CSV
 
-w_query2csv  
+w_query2csv
 readme / manual
 
 
-wolo '.' studio  
+wolo '.' studio
 2009 - 2024
 wolo.wolski (at) gmail (dot) com
 
@@ -12,9 +12,9 @@ wolo.wolski (at) gmail (dot) com
 https://github.com/w010/w_query2csv/
 
 
-Credits:  
-Q3i  
-Hint Intermedia  
+Credits:
+Q3i
+Hint Intermedia
 
 
 ##
@@ -53,12 +53,12 @@ You can provide it by yourself, ie. writing Fluid template with custom viewhelpe
 
 ## 2. WHAT FOR DO I NEED IT?
 
-If you have data set in db, eg. some orders or contest answers, that must be quick sent to someone by email, or 
+If you have data set in db, eg. some orders or contest answers, that must be quick sent to someone by email, or
 periodically downloaded by someone, or something like that, this extension is very useful.
 
-Just make a new page, insert plugin and set up the file, that will be downloaded by other or specified users, which you 
-may specify by standard TYPO3 access settings.  
-It's simple and easy to configure, additionally you may process selected fields using some functions, eg. convert 
+Just make a new page, insert plugin and set up the file, that will be downloaded by other or specified users, which you
+may specify by standard TYPO3 access settings.
+It's simple and easy to configure, additionally you may process selected fields using some functions, eg. convert
 timestamps to human-readable strings.
 
 If you want something more functional it's a good base to develop something bigger.
@@ -67,25 +67,25 @@ If you want something more functional it's a good base to develop something bigg
 
 
 
-## 3. HOW TO USE IT? 
+## 3. HOW TO USE IT?
 
 ### 3.1 Basic
 
 Simply insert plugin on a new page named eg. 'CSV export' and configure input and output using TypoScript.
 A Backend Section type page is good idea, you may want to control download access for backend non-admin users.
-To download file, you call page url + file id using _?f=[configuration_key]_, like that:  
+To download file, you call page url + file id using _?f=[configuration_key]_, like that:
 http://example.com/csv_export.html?f=somestuff_orders
 
 NOTE, that embeding this plugin causes that specific page not being cached!
 
 
 Note, that this plugin's output is not based on standard TYPO3 page type handling, but sends headers and sends output
-on a page containing it. But you can insert it on standard frontend page between normal content - it won't output anything until 
-asked (using 'f' param or using 'default' key - see config).  
-It's possible to make CSV output using page type, if you use a snippet from 
+on a page containing it. But you can insert it on standard frontend page between normal content - it won't output anything until
+asked (using 'f' param or using 'default' key - see config).
+It's possible to make CSV output using page type, if you use a snippet from
 Configuration/TypoScript/Setup/setup.ts
 
-(You may wonder why it's made in such weird way, why not generate nice typolinks with piVars, cHash etc?  
+(You may wonder why it's made in such weird way, why not generate nice typolinks with piVars, cHash etc?
   - to not suggest that it's just another content element / simple frontend functionality. I mean, it was made for private use,
 	to help admins with downloading orders from forms, so it doesn't have too much security check, user control etc. It's just
 	an adapter, a flexible data output renderer. If you need it as a public frontend function, implement the interface by yourself,
@@ -98,8 +98,8 @@ Configuration/TypoScript/Setup/setup.ts
 
 ### 3.2 Using in own plugins
 
-One time I needed to display link to csv in my other plugin context. This needs to make query2csv object, prepare 
-and pass config to it, and call when requested.  
+One time I needed to display link to csv in my other plugin context. This needs to make query2csv object, prepare
+and pass config to it, and call when requested.
 This can be done like that:
 
 ```
@@ -176,23 +176,23 @@ plugin.tx_wquery2csv_export  {
 
 Above file is available using url param ?f=somestuff_orders.
 
-##  
+##
 
 ### 4.2 Shortest working example:
 
-When you take a look at the reference below, you'll see, that only db table is really required in configuration, so 
+When you take a look at the reference below, you'll see, that only db table is really required in configuration, so
 the shortest config would look like this:
 
 ```
 plugin.tx_wquery2csv_export.files.my_file.input.table = tx_sometable
 ```
 
-> Explanation:  
-file key “**my_file**” has set input table to “**tx_sometable**” (and plugin is inserted on _download_csv_ page)  
-so:  
-the csv file containing records from this table will be accessed using: [download_csv.html]?f=my_file  
-and:  
-prompted to download as my_file.csv  
+> Explanation:
+file key “**my_file**” has set input table to “**tx_sometable**” (and plugin is inserted on _download_csv_ page)
+so:
+the csv file containing records from this table will be accessed using: [download_csv.html]?f=my_file
+and:
+prompted to download as my_file.csv
 
 The easiest way to quickly configure is to just copy example config from above.
 
@@ -204,46 +204,46 @@ _See more examples in Configuration/TypoScript/setup.ts_
 ### 4.3 Options reference:
 
 ```
-'files' (TypoScript properties) - set of file keys to separate configs for misc files. 
+'files' (TypoScript properties) - set of file keys to separate configs for misc files.
 	if you want only one file, the key may be whatever.
 	Every key must have configured input and output like this:
 
 	[your_file_key] (TypoScript properties) - configuration key named by you
 
 		'input':
-			
+
 			[Required]
 
 			'table' (String) 			- (part of query) db table, of course you may use joins and other...
-	
+
 			[Optional]
 
 			'fields' (String) 			- (part of query) fields that we want to select. Default = *
-	
+
 			'where',
 			'group',
 			'order',
 			'limit' (String)			- standard parts of database query
-	
+
 			'where_wrap' (Array)		- it may override normal 'where' string with stdWrapped version, to allow ts values, like this:
 				where_wrap = TEXT
 				where_wrap.value = pid = {page:uid}
 				where_wrap.stdWrap.insertData = 1
-	
+
 			'enableFields' (Bool/Int) 	- use system enableFields for excluding unavailable records. works of course only for TCA configured tables
-	
+
 			'default_enableColumns' (Bool/Int) - use hardcoded "deleted=0 AND hidden=0" in WHERE clause. In case you have some records from a table
 				that is not currently loaded to TCA (like disabled ext) you can enable this option to simply filter them instead of writing this in where. Default = 0
 				(note, that not all Typo3 tables has such fields, ie. users tables, for some reason, have 'disable' instead of 'hidden'.)
-	
+
 			'sql_file' (String) 		- path to sql query template file. this was originally introduced by Q3i. if set, then instead of using above typoscript query configuration
 				a file containing prepared query is used. extremely handy when using complicated queries with processing.
 				example of userfunc passing from there:
 					SELECT .... , 'USER_FUNC:NameSpace\\Postprocessor\\DataPostprocessor->test' As User_Func_Test,   ....
 					makes every row have a field named User_Func_Test with userfunc path as value, which will be called on row processing
-	
+
 			'sql_markers' (Array) 		- optionally given markers can be replaced in sql_file template before send query to database. Array of:
-				MARKER = value 
+				MARKER = value
 				(### is added automatically)
 
 
@@ -253,20 +253,16 @@ _See more examples in Configuration/TypoScript/setup.ts_
 			[Optional]
 
 			'filename' (String) 			- output filename. Default is same as config file key with csv extension added
-			
+
 			'separator' (String) 			- csv separator used in file. Default: ,
-			
+
 			'quote' (String) 				- csv value quote. Default: "
-			
+
 			'charset' (String) 				- set alternative charset encoding. Default = UTF-8
 
 			'htmlspecialchars' (Bool/Int) 	- htmlspecialchars every value. Default = 0
 
-			'hsc'							- (deprecated) same as htmlspecialchars
-
 			'strip_linebreaks' (Bool/Int) 	- strip line breaks from value. Default = 0
-
-			'nbr' - (deprecated) same as strip_linebreaks
 
 			'no_header_row' (Bool/Int) 		- don't make first line header with fieldnames
 
@@ -293,7 +289,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 						class = NameSpace\MyExt\WQuery2csv\Postprocessor\DataPostprocessor->myMethod
 						someConfParam = myValue
 					}
-			
+
 			'postprocessors_header' (Array)	- postprocess header row labels, to replace db fieldnames with your fancy labels
 				if given class specified with optional ->methodName, this method will be called. else by default method ->process is called.
 				example:
@@ -301,8 +297,8 @@ _See more examples in Configuration/TypoScript/setup.ts_
 						class = NameSpace\MyExt\WQuery2csv\Postprocessor\HeaderPostprocessor->myMethod
 						someConfParam = myValue
 					}
-					
-			'additionalHeaders' (Array)		- additional headers to be sent with the file output 
+
+			'additionalHeaders' (Array)		- additional headers to be sent with the file output
 				example:
 					10 = Content-Type: application/octet-stream
 
@@ -316,7 +312,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 						}
 					}
 
-		
+
 		'disable' (Bool/Int)	- disable this file (quick restrict download access). Default = 0
 
 
@@ -345,28 +341,28 @@ _See more examples in Configuration/TypoScript/setup.ts_
 				source_value = Export Value
 			}
 
-	
+
 	StaticValue - Replaces original value with given, always the same – may be handy in some cases:
 		config:
 			.value = [string]
 
-			
+
 	PregReplace - Performs regular expression replacement using php's preg_replace function
 		config:
 			.pattern = [string] - regexp pattern to match
 			.replacement = [string] - when string found, replace with this one
 			.limit = [int] - limit replacements, if matches multiple
 
-	
+
 	Unserialize - Unserializes an array and generates key: value pairs separated by given delimiter
 		config:
 			.delimiter = [string] - may be anything, also you can use special keywords: -LINEBREAK- and -SPACE-. defaults to linebreak
 			.lineBreakType = [string] - if use linebreak, may be configured to use CR, LF or CRLF. defaults to LF
-			.returnJson = [bool/int] - get the whole array as json instead of formatted text. can be used later for some processing 
-			.mergeAsColumns = [bool/int] - inserts the unserialized array items as new columns to csv output (also forces returnJson) 
-				(consider unsetting (remove_fields) such field's original value from standard output) 
+			.returnJson = [bool/int] - get the whole array as json instead of formatted text. can be used later for some processing
+			.mergeAsColumns = [bool/int] - inserts the unserialized array items as new columns to csv output (also forces returnJson)
+				(consider unsetting (remove_fields) such field's original value from standard output)
 
-	
+
 	LabelsFromRecords - Generate string with some values from related records, using uid-commalist, like, ie. titles of referenced categories
 		config:
 			.table = [string] - table name to read referenced items from
@@ -382,7 +378,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 		config:
 			the same as above, plus:
 			.table_mm = [string] - mm relations table
-	
+
 ...or write your own.
 ```
 
@@ -404,37 +400,37 @@ I recommend embedding it always on pages with BE-user or admin access only, unle
 
 ## 6. FAQ
 
---  
-**Q: 
+--
+**Q:
 I inserted plugin content element on a page, but I don't see anything in frontend**
 
 > A:
 If file key (?f=file_key) in url is not specified, plugin doesn't display any output (only some html comment)
 
 
---  
+--
 **Q:
 How to add own processing methods for field values?**
 
 > A:
 Write any Typo3-callable class with a ``run()`` public method with params ``($params, &$Core)`` and return a string.
-(Optionally you can use any method name and configure process using class->methodname)  
-In $params array you can expect to be passed:  
+(Optionally you can use any method name and configure process using class->methodname)
+In $params array you can expect to be passed:
 	'value' - field value from db
-	'fieldName' - name of current processed field  
-	'row' - whole record of current item (I mean, fields which you set to read in .input.fields, if not "*")  
+	'fieldName' - name of current processed field
+	'row' - whole record of current item (I mean, fields which you set to read in .input.fields, if not "*")
 	'conf' - typoscript configuration of this processor
 $Core is a WoloPl\WQuery2csv\Core instance
 
 > Best way is to just make a new class in your extension, (respecting standard Typo3 path and naming convention to make the class be autoloaded)
 > the same way as I did in Classes/Process/yyyy.php, and configure typoscript giving your class namespace path.
-> (like: class file /my_ext/Classes/WQuery2csv/MyCustomProcessor.php = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor)  
-> Implement the \WoloPl\WQuery2csv\Process\ProcessorInterface to make things easier. Finally setup in your ts:  
-	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor``  
+> (like: class file /my_ext/Classes/WQuery2csv/MyCustomProcessor.php = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor)
+> Implement the \WoloPl\WQuery2csv\Process\ProcessorInterface to make things easier. Finally setup in your ts:
+	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field = MyNamespace\MyExt\WQuery2csv\MyCustomProcessor``
 	``plugin.tx_wquery2csv_export.files.myFile.output.process_fields.some_field.someAdditionalOptionToPass = something``
 
 
---  
+--
 **Q:
 My output file is empty!**
 
@@ -446,12 +442,12 @@ My output file is empty!**
 > - set "enableFields" to 0 (not just delete line!), maybe the table is not configured in TCA
 
 
---  
+--
 **Q:
-What if be user edit has template edit priviliges and exports something that he is not allowed?  
+What if be user edit has template edit priviliges and exports something that he is not allowed?
 	Why I cannot export my fe_users?**
 
-> A:  
+> A:
 Some tables would never be accessed even by other backend users. To prevent situation when a user configure plugin to see ie. users passwords,
 or allow a table which is originally blocked, set selected tables as comma separated list on "not_allowed_tables", in LocalConfiguration or AdditionalConfiguration
 ```
@@ -496,9 +492,9 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 ## 8. Q3i: migrate projects still using modified 0.1.5
 
 - 'USERFUNC' field value: change parameters array passed to userfunc, keys: 'field' -> 'fieldName', 'data' -> 'row'. old names will be still working for some time, in future would be removed
-- q3i mods are now integrated since 0.4.0, so ts needs to be changed:  
-	- input.q3i.postprocessors  ->  output.postprocessors_row (it is actually output option, so I moved it where it belongs)  
-    - input.q3i.sql_file  ->  input.sql_file  
+- q3i mods are now integrated since 0.4.0, so ts needs to be changed:
+	- input.q3i.postprocessors  ->  output.postprocessors_row (it is actually output option, so I moved it where it belongs)
+    - input.q3i.sql_file  ->  input.sql_file
     - input.q3i.sql_markers  ->  input.sql_markers
 - nbr -> strip_linebreaks, hsc -> htmlspecialchars
 
@@ -527,10 +523,10 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 - Config validation, debug/migration improvements
 
 ##### 0.6.1
-- [minor breaking] Core::config property was renamed to Core::file_config (might impact your custom processors or xclasses) 
+- [minor breaking] Core::config property was renamed to Core::file_config (might impact your custom processors or xclasses)
 - New options: output.additionalHeaders, output.additionalHeadersProcessor
-- File delivery was extracted to its own Disposition object, for more control of output and better extendability 
-- Some old long-deprecated options (hsc, nbr) now triggers deprecation log/error 
+- File delivery was extracted to its own Disposition object, for more control of output and better extendability
+- Some old long-deprecated options (hsc, nbr) now triggers deprecation log/error
 
 ##### 0.6.0
 - TYPO3 10.4 / full Doctrine compatibility - no more typo3db_legacy
@@ -548,8 +544,8 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 - Automatic debug_allowed now works also on Development/[*] instances
 
 ##### 0.4.0
-- Q3i modifications and features now integrated into ext (sql template file, postprocessors, some tuning)  
-- Value processing is now split to separate classes for each processor (@see Migrate) - (old way is deprecated but still works yet)  
+- Q3i modifications and features now integrated into ext (sql template file, postprocessors, some tuning)
+- Value processing is now split to separate classes for each processor (@see Migrate) - (old way is deprecated but still works yet)
 - Minor tweaks
 
 ##### 0.3.0
@@ -588,7 +584,7 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
                 limit = 3
                 fields = uid,title
             }
-    
+
             output    {
                 add_fields = cat_internal
                 process_fields    {
@@ -608,7 +604,7 @@ Header postprocess userfunc example:
 ```php
     namespace Q3i\Q3iewContest\CsvExport\Postprocessor;
 
-    class HeaderPostprocessor   {        
+    class HeaderPostprocessor   {
 
         /**
          * Takes 'config' and 'data' keys in $config array, returns $config['data']
@@ -633,7 +629,7 @@ Header postprocess userfunc example:
 
 Chrome extension - Magic server teleporter. Extreme workflow accelerator. For jumping between projects
 instances / servers / frontend / backend. Has many useful features (most of them optional) like marking current
-instance by colored favicon and badge, wide project management with team share features.  
+instance by colored favicon and badge, wide project management with team share features.
 It's very helpful on everyday basis, if you work with dozens of projects on a number of dev/staging environments
 and need to move fast between them not search every time for an url to each one.
 
@@ -645,7 +641,7 @@ https://chrome.google.com/webstore/detail/typo3-befeenv-handy-switc/ohemimdlihjd
 
 Damn Usable Management Program for TYPO3
 Originally a database import/export and backup utility, now a tool for a number of Typo3 system operations
-for devs and integrators.  
+for devs and integrators.
 Functions: Database dump, full migration pack, backup, domains update, missing files fetcher, database
 manual query quick exec, system actions, quick xclass generator.
 
@@ -655,7 +651,7 @@ https://github.com/w010/DUMP
 
 ### - TYPO3 Content Summary
 
-Simple, but extremely helpful script to make a summary and visualize tt_content use in a TYPO3 installation.  
+Simple, but extremely helpful script to make a summary and visualize tt_content use in a TYPO3 installation.
 Helps to track & analyse content types / plugin instances / header types / frames / image orient / tv fce,
 especially when you're going to make a major system update and have to take care of all plugins, migrate
 csc -> fsc / other incompatibilities between Typo3 branches. Here you can see where all your customized ts csc

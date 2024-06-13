@@ -25,6 +25,7 @@
 namespace WoloPl\WQuery2csv;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Driver\DriverStatement;
 use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -84,8 +85,8 @@ class Core	{
 	 */
     protected function _init(): void  {
         $this->cObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
-        
-        if ($this->file_config['disable'])  {
+
+        if ($this->file_config['disable'] ?? 0)  {
             die ('file is disabled.');
         }
 
@@ -102,8 +103,8 @@ class Core	{
     * @return string $csv - csv file content
     */
     public function getCsv(): string     {
-        $input = $this->file_config['input.'];
-        $output = $this->file_config['output.'];
+        $input = $this->file_config['input.'] ?? [];
+        $output = $this->file_config['output.'] ?? [];
 
         $counter = 0;
 	    $csv = '';
@@ -112,28 +113,46 @@ class Core	{
 	    $rowBuffer = [];
 
         // set default values for not given options
-        if (!isset($input['fields']))           $input['fields'] = '*';
-        if (!isset($output['separator']))       $output['separator'] = ',';
-        if (!isset($output['quote']))           $output['quote'] = '"';
-        
-        
-        if ($output['hsc']) {
-            $output['htmlspecialchars'] = 1;
-            trigger_error('W_query2csv: option output.hsc is deprecated. Use output.htmlspecialchars instead', E_USER_DEPRECATED);
-        }
-        if ($output['nbr']) {
-            $output['strip_linebreaks'] = 1;
-            trigger_error('W_query2csv: option output.nbr is deprecated. Use output.strip_linebreaks instead', E_USER_DEPRECATED);
-        }
+        if (!isset($input['fields']))                   $input['fields'] = '*';
+        if (!isset($input['where']))                    $input['where'] = '';
+        if (!isset($input['where_wrap']))               $input['where_wrap'] = '';
+        if (!isset($input['where_wrap.']))              $input['where_wrap.'] = [];
+        if (!isset($input['group']))                    $input['group'] = '';
+        if (!isset($input['order']))                    $input['order'] = '';
+        if (!isset($input['limit']))                    $input['limit'] = '';
+        if (!isset($input['enableFields']))             $input['enableFields'] = 0;
+        if (!isset($input['default_enableColumns']))    $input['default_enableColumns'] = 0;
+        if (!isset($input['sql_file']))                 $input['sql_file'] = '';
+        if (!isset($input['sql_markers']))              $input['sql_markers'] = [];
+
+        if (!isset($output['filename']))                $output['filename'] = '';
+        if (!isset($output['separator']))               $output['separator'] = ',';
+        if (!isset($output['quote']))                   $output['quote'] = '"';
+        if (!isset($output['charset']))                 $output['charset'] = 'UTF-8';
+        if (!isset($output['htmlspecialchars']))        $output['htmlspecialchars'] = 0;
+        if (!isset($output['strip_linebreaks']))        $output['strip_linebreaks'] = 0;
+        if (!isset($output['no_header_row']))           $output['no_header_row'] = 0;
+        if (!isset($output['process_fields']))          $output['process_fields'] = [];
+        if (!isset($output['add_fields']))              $output['add_fields'] = '';
+        if (!isset($output['remove_fields']))           $output['remove_fields'] = '';
+        if (!isset($output['postprocessors_row.']))     $output['postprocessors_row.'] = [];
+        if (!isset($output['postprocessors_header.']))  $output['postprocessors_header.'] = [];
+        if (!isset($output['additionalHeaders']))       $output['additionalHeaders'] = [];
+        if (!isset($output['additionalHeadersProcessor']))   $output['additionalHeadersProcessor'] = '';
+
+
+
 
 
         // database read
-        $preparedStatement = $this->_readData($input);
+        // for some reason I don't get now, it needs to ->execute() here again, even if it just was in the _readData()
+        $preparedStatement = $this->_readData($input)->execute();
 
 
         // main iteration
         if ($preparedStatement)   {
-            while(($row_db = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
+            //$preparedStatementExecute = $preparedStatement
+            while(($row_db = $preparedStatement->fetchAssociative()) !== FALSE)   {
 
 	            // make sure that $fields array is empty and ready for new row data
 	            $fields = [];
@@ -154,7 +173,7 @@ class Core	{
                 // build output row from each db field
                 foreach($row_db as $field => $value)  {
                     // process field with userfunction
-                    if ($process_method = $output['process_fields.'][$field])    {
+                    if ($process_method = $output['process_fields.'][$field] ?? '')    {
                     	// process method configured in typoscript
 	                    $params = [
 	                    	'value' => $value,
@@ -167,7 +186,7 @@ class Core	{
 		                    $process_method .= '->run';
 	                    }
                     	$value = GeneralUtility::callUserFunction($process_method, $params, $this);
-                    } else if (strstr($value, 'USER_FUNC')) {
+                    } else if (strstr((string) $value, 'USER_FUNC')) {
                         // process method taken from sql value (in most cases set in query template)
                         // imho we can get the same result using ts add_fields and process_fields, but maybe sometimes it's more handy to do it from sql file
 	                    $tmp = GeneralUtility::trimExplode(':', $value);
@@ -183,9 +202,9 @@ class Core	{
 	                    $value = GeneralUtility::callUserFunction($userFuncDef, $userFuncParams, $this);
                     }
 
-                    // if we want to add the unserialized array to the csv as new columns (merge with current fields) we need it as an array. 
+                    // if we want to add the unserialized array to the csv as new columns (merge with current fields) we need it as an array.
                     // the Unserialize processor handles this by itself - with mergeAsColumns=1 it automatically returns json
-                    if ($output['process_fields.'][$field.'.']['mergeAsColumns'])    {
+                    if (isset($output['process_fields.'][$field.'.']['mergeAsColumns']) && $output['process_fields.'][$field.'.']['mergeAsColumns'])    {
                         $mergeColumns = \GuzzleHttp\json_decode($value,true);
                         if (is_array($mergeColumns)) {
                             $fields = array_merge($fields, $mergeColumns);
@@ -302,16 +321,17 @@ class Core	{
     }
 
 
-
     /**
-    * Reads data from database with given config
-    *
-    * @param array $input
-    * @return \Doctrine\DBAL\Driver\Statement
-    */
-    private function _readData(array $input): \Doctrine\DBAL\Driver\Statement    {
+     * Reads data from database with given config
+     *
+     * @param array $input
+     * @return \Doctrine\DBAL\Driver\Statement
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     */
+    private function _readData(array $input): \Doctrine\DBAL\Driver\Statement {
 
-        // File based query (sql template) 
+        // File based query (sql template)
         if ($input['sql_file']) {
             if (is_file($input['sql_file'])) {
                 $fileContent = file_get_contents($input['sql_file']);
@@ -332,7 +352,7 @@ class Core	{
         else {
         	if ($input['where_wrap.'])
 	        	$input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
-        	
+
         	if ($input['enableFields']) {
                 $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($input['table']);
                 $restrictions = $queryBuilder->getRestrictions();
@@ -340,10 +360,10 @@ class Core	{
                     GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionByName('Default'));
                 $restrictionsExpression = $restrictions->buildExpression([$input['table'] => $input['table']], $ExpressionBuilder);
             }
-        	
+
         	$query = 'SELECT ' . $input['fields']
                 . ' FROM ' . $input['table']
-                . ' WHERE ' . ($input['where'] ? $input['where'] : '1=1') 
+                . ' WHERE ' . ($input['where'] ? $input['where'] : '1=1')
                     . ($input['default_enableColumns'] ? ' AND NOT deleted AND NOT hidden'
                         : ($input['enableFields'] && $restrictionsExpression ? ' AND ' . $restrictionsExpression
                             : ''))
@@ -364,7 +384,7 @@ class Core	{
      *
      * @return \Doctrine\DBAL\Driver\Connection
      */
-    public function getDatabaseConnection()  {
+    public function getDatabaseConnection(): \Doctrine\DBAL\Driver\Connection {
         $pool = GeneralUtility::makeInstance(ConnectionPool::class);
 		return $pool->getConnectionByName('Default')->getWrappedConnection();
     }

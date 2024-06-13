@@ -91,7 +91,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
                 }
                 if (!$this->file_config['input.']['table'] && !$this->file_config['input.']['sql_file']){
                     print "Error - Configuration incomplete - at least .input.table or input.sql_file is needed to be set<br><br>";
-                    
+
                 }
                 print "<pre>";
                 print "<br><br>FILE CONFIG:<br><br>";
@@ -129,7 +129,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
      * @return bool
      */
 	protected function isDebugEnabled()  {
-	    return (GeneralUtility::_GP('debug')  &&  $this->conf['debug_allowed'])
+	    return (GeneralUtility::_GP('debug')  &&  isset($this->conf['debug_allowed'])  &&  $this->conf['debug_allowed'])
 			||  (GeneralUtility::_GP('debug')  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment());
     }
 
@@ -147,7 +147,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	    }
 	    else    {
 	        if (!$this->file_key) {
-	            if ($this->conf['default_config_if_missed'])    {
+	            if ($this->conf['default_config_if_missed'] ?? 0)    {
 				    $this->_setDefaultConfig();
 			    }
 			    else    {
@@ -165,7 +165,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 
 	    // set some default values - must be set here (Core doesn't know, what the file_key is, it only takes input/output)
-	    if (!$this->file_config['output.']['filename'])
+	    if (!isset($this->file_config['output.']['filename']) || !$this->file_config['output.']['filename'])
 		    $this->file_config['output.']['filename'] = $this->file_key . '.csv';
     }
 
