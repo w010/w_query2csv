@@ -262,7 +262,8 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 			'htmlspecialchars' (Bool/Int) 	- htmlspecialchars every value. Default = 0
 
-			'strip_linebreaks' (Bool/Int) 	- strip line breaks from value. Default = 0
+			'strip_linebreaks' (Bool/Int|String) 	- strip line breaks from value. Default = 0
+				if given string, it will replace linebreaks with it
 
 			'no_header_row' (Bool/Int) 		- don't make first line header with fieldnames
 
@@ -275,6 +276,15 @@ _See more examples in Configuration/TypoScript/setup.ts_
 						tstamp = WoloPl\WQuery2csv\Process\ParseDate
 						tstamp.format = d.m.Y
 				@SEE reference below
+
+			'process_fields_header' (TypoScript properties) - process header fields - column names [key] with callable method [value]
+				it works the same as field processing, so it can be used to easily set nice labels to column names in header row
+				Example:
+					process_fields_header	{
+						product_number = WoloPl\WQuery2csv\Process\StaticValue
+						product_number.value = Product Number
+				@SEE 'process_fields'
+
 
 			'add_fields' (String) 			- commalist of fieldnames - to make additional columns in output, that are not present in database. values for them are
 				set in processing, so they may be configured in process_fields.
@@ -292,6 +302,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 			'postprocessors_header' (Array)	- postprocess header row labels, to replace db fieldnames with your fancy labels
 				if given class specified with optional ->methodName, this method will be called. else by default method ->process is called.
+				(but better way in most simple cases is to use 'process_fields_header')
 				example:
 					10	{
 						class = NameSpace\MyExt\WQuery2csv\Postprocessor\HeaderPostprocessor->myMethod
@@ -351,7 +362,13 @@ _See more examples in Configuration/TypoScript/setup.ts_
 		config:
 			.pattern = [string] - regexp pattern to match
 			.replacement = [string] - when string found, replace with this one
+				("-SPACE-" keyword can be used, for typoscript configuring purposes, where value of property is always trimmed)
 			.limit = [int] - limit replacements, if matches multiple
+
+
+	StripHtml - Remove HTML markup from text
+		config:
+			.allowed_tags = [string] optional, list of tags to keep
 
 
 	Unserialize - Unserializes an array and generates key: value pairs separated by given delimiter
@@ -382,6 +399,33 @@ _See more examples in Configuration/TypoScript/setup.ts_
 ...or write your own.
 ```
 
+
+### 4.5 Chaining - Multiple processors on one field:
+
+You can easily run many processors on one field, configuring them as a _Chain_, the same way as any other processor.
+In its config you define other processors, in standard way, any order you need:
+
+```
+
+	Chain - set of many processors 
+		
+	config:
+		.chain {
+			index = [callable_process_method] (typo3 native way, preferable modern namespace call, but may be classic file:class->method reference, anything allowed by GeneralUtility::callUserFunction
+			index.someOption = someValue
+			The same way, as you define _process_fields_ (see above)
+			Example:
+				chain	{
+					10 = WoloPl\WQuery2csv\Process\StaticValue
+					10.value = TEST_abc_YYYY
+					20 = WoloPl\WQuery2csv\Process\PregReplace
+					20.pattern = /abc/
+					20.replacement = 111
+				}
+			@SEE reference above
+		}
+
+```
 
 
 
@@ -501,6 +545,17 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 
 ## 9. ChangeLog
+
+##### 0.6.8
+- new processor: Chain (runs multiple processor for a field)
+- new processor: StripHtml
+- feat: process_fields_header can now be processed same way as process_fields
+- feat: processor PregReplace: now 'replacement' can use '-SPACE-' keyword
+- feat: option output.strip_linebreaks: can now be set to a string, to which it will replace linebreaks
+- fix: database integration (fetch query)
+- bugfix: processor LabelsFromMmRelations: now builds correct mm join query
+- bugfix: processor LabelsFromRecords: query build bug
+
 
 ##### 0.6.7
 - 12.x compatibility
