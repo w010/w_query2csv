@@ -72,13 +72,12 @@ class LabelsFromRecords implements ProcessorInterface	{
         $query = 'SELECT '.$conf['field']
             . ' FROM ' . $conf['table']
             . ' WHERE uid IN (' . implode(',', array_map('intval', explode(',', $value))) . ')'
-            . $conf['additional_where'];
+            . ' ' . $conf['additional_where'];
         
-        $preparedStatement = $Core->getDatabaseConnection()->prepare($query);
-        $preparedStatement->execute();
+        $preparedStatement = $Core->getDatabaseConnection()->query($query);
         $Core->lastQuery[] = $query;
 
-        while(($row = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
+        while(($row = $preparedStatement->fetchAssociative()) !== FALSE)   {
 			$labels[] = $row[ $conf['field'] ];
 		}
 

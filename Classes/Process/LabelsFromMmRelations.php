@@ -57,6 +57,9 @@ class LabelsFromMmRelations implements ProcessorInterface	{
         if (!$conf['table']  ||  !$conf['table_mm']  ||  !$conf['field'])
             return __METHOD__ . '() - NO TABLE OR TABLE_MM OR FIELD SPECIFIED!';
 
+        if (!$params['row']['uid'])
+            return __METHOD__ . '() - NO RECORD\'S uid PASSED! NOTE: To make processors with references work, uid must be selected (in "input.fields"), it can be removed from output using "remove_fields = uid"';
+
         $lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
 
         if (!$conf['delimiter'])
@@ -69,15 +72,14 @@ class LabelsFromMmRelations implements ProcessorInterface	{
         $query = 'SELECT r.'.$conf['field']
             . ' FROM ' . $conf['table'] . ' AS r '
             . ' JOIN ' . $conf['table_mm'] . ' AS m '
-            . ' ON  r.uid = m.uid_foreign'
-            . ' WHERE m.uid_local = '.intval($params['row']['uid'])
-            . $conf['additional_where'];
+            . ' ON  r.uid = m.uid_local'
+            . ' WHERE m.uid_foreign = '.intval($params['row']['uid'])
+            . ' ' . $conf['additional_where'];
         
-        $preparedStatement = $Core->getDatabaseConnection()->prepare($query);
-        $preparedStatement->execute();
         $Core->lastQuery[] = $query;
+        $preparedStatement = $Core->getDatabaseConnection()->query($query);
 
-        while(($row = $preparedStatement->fetch(\PDO::FETCH_ASSOC)) !== FALSE)   {
+        while(($row = $preparedStatement->fetchAssociative()) !== FALSE)   {
             $labels[] = $row[ $conf['field'] ];
         }
 

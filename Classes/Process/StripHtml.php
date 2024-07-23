@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2024 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -29,30 +29,25 @@ use WoloPl\WQuery2csv\Core;
 
 
 /**
- * Process value: Preg replace
+ * Process value: Strip HTML tags
  *
  * @author	Wolo <wolo.wolski@gmail.com>
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class PregReplace implements ProcessorInterface	{
+class StripHtml implements ProcessorInterface	{
 
 
 	/**
 	 * Performs regular expression replacement using preg_replace
 	 *
-	 * @param array $params: array 'pattern' (string) - regexp pattern, 'replacement' (string) - replacement, 'limit' (int) - max replacements (see preg_replace manual)
+	 * @param array $params: array|string 'allowed_tags' (string) - tags to keep (see strip_tags manual)
 	 * @param Core $Core
 	 * @return string
 	 */
     public function run(array $params, Core &$Core): string {
 		$conf = $params['conf'];
-	    if (!$conf['pattern'])
-	        return (string) $params['value'];
-
-        $conf['replacement'] = str_replace(['-SPACE-'], [' '], $conf['replacement']);
-
-	    return (string) preg_replace($conf['pattern'], $conf['replacement'], $params['value'], $conf['limit'] ?? -1);
+	    return strip_tags($params['value'], $conf['allowed_tags']);
     }
 
 }

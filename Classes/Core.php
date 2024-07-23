@@ -25,7 +25,6 @@
 namespace WoloPl\WQuery2csv;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Driver\DriverStatement;
 use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -145,13 +144,11 @@ class Core	{
 
 
         // database read
-        // for some reason I don't get now, it needs to ->execute() here again, even if it just was in the _readData()
-        $preparedStatement = $this->_readData($input)->execute();
+        $preparedStatement = $this->_readData($input);
 
 
         // main iteration
         if ($preparedStatement)   {
-            //$preparedStatementExecute = $preparedStatement
             while(($row_db = $preparedStatement->fetchAssociative()) !== FALSE)   {
 
 	            // make sure that $fields array is empty and ready for new row data
@@ -240,7 +237,8 @@ class Core	{
 
 					 // if set, linebreaks are removed (changed to space) from value
 		            if ($output['strip_linebreaks'])  {
-			            $fieldValue = preg_replace("/\r|\n/s", " ", $fieldValue);
+                        $replacement = $output['strip_linebreaks'] !== "1" ? $output['strip_linebreaks'] : " ";
+			            $fieldValue = preg_replace("/\r\n|\r|\n/s", $replacement, $fieldValue);
 		            }
 
                 	// make quotes csv-compatible double quotes (if not hsc-ed already...)
@@ -278,6 +276,26 @@ class Core	{
 
 	    if (!$output['no_header_row']) {
 	        $headerRowLabels = $fieldNames;
+            
+            // process header fields - column names
+            foreach($headerRowLabels as $field_index => $field)  {
+                // process field with userfunction
+                if ($process_method = $output['process_fields_header.'][$field] ?? '')    {
+                    // process method configured in typoscript
+                    $params = [
+                        'value' => $field,
+                        'row' => [],
+                        'conf' => $output['process_fields_header.'][$field.'.'],
+                        'fieldName' => $field
+                    ];
+                    if (!strstr($process_method, '->')) {
+                        // method not specified
+                        $process_method .= '->run';
+                    }
+                    $headerRowLabels[$field_index] = GeneralUtility::callUserFunction($process_method, $params, $this);
+                }
+            }
+            
 			// postprocess header row - fieldnames / labels
 			if (is_array($output['postprocessors_header.'])) {
 				foreach ($output['postprocessors_header.'] as $key => $config) {
@@ -325,11 +343,11 @@ class Core	{
      * Reads data from database with given config
      *
      * @param array $input
-     * @return \Doctrine\DBAL\Driver\Statement
+     * @return \Doctrine\DBAL\Driver\Result
      * @throws \Doctrine\DBAL\Driver\Exception
      * @throws \Doctrine\DBAL\Exception
      */
-    private function _readData(array $input): \Doctrine\DBAL\Driver\Statement {
+    private function _readData(array $input): \Doctrine\DBAL\Driver\Result {
 
         // File based query (sql template)
         if ($input['sql_file']) {
@@ -343,8 +361,7 @@ class Core	{
             } else {
                 die ("<b>Fatal error:</b> Given file {$input['sql_file']} does not exist or is not readable.");
             }
-	        $preparedStatement = $this->getDatabaseConnection()->prepare($fileContent);
-        	$preparedStatement->execute();
+	        $preparedStatement = $this->getDatabaseConnection()->query($fileContent);
             $this->lastQuery[] = $fileContent;
         }
 
@@ -372,8 +389,7 @@ class Core	{
                 . ($input['limit'] ? ' LIMIT ' . $input['limit'] : '');
 
             $this->lastQuery[] = $query;
-        	$preparedStatement = $this->getDatabaseConnection()->prepare($query);
-        	$preparedStatement->execute();
+        	$preparedStatement = $this->getDatabaseConnection()->query($query);
         }
 
         return $preparedStatement;
