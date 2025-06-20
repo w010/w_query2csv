@@ -90,7 +90,7 @@ class Core	{
         }
 
         // for security reasons, don't allow to export tables like fe/be users
-        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']['not_allowed_tables'], $this->file_config['input.']['table']))   {
+        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']['not_allowed_tables'], $this->file_config['input.']['table'] ?? ''))   {
             die ('table not allowed.');
         }
     }
@@ -175,7 +175,7 @@ class Core	{
 	                    $params = [
 	                    	'value' => $value,
 		                    'row' => $row_db,
-		                    'conf' => $output['process_fields.'][$field.'.'],
+		                    'conf' => $output['process_fields.'][$field.'.'] ?? [],
 		                    'fieldName' => $field
 	                    ];
 	                    if (!strstr($process_method, '->')) {
@@ -238,6 +238,7 @@ class Core	{
 					 // if set, linebreaks are removed (changed to space) from value
 		            if ($output['strip_linebreaks'])  {
                         $replacement = $output['strip_linebreaks'] !== "1" ? $output['strip_linebreaks'] : " ";
+			            //$fieldValue = preg_replace("/\r|\n/s", $replacement, $fieldValue);
 			            $fieldValue = preg_replace("/\r\n|\r|\n/s", $replacement, $fieldValue);
 		            }
 

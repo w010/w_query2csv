@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -46,7 +46,10 @@ class StripHtml implements ProcessorInterface	{
 	 * @return string
 	 */
     public function run(array $params, Core &$Core): string {
-		$conf = $params['conf'];
+		$conf = $params['conf'] ?? [];
+        Utility::nullCheckArrayKeys($conf, [['allowed_tags' => '']]);
+        Utility::nullCheckArrayKeys($params, ['value']);
+
 	    return strip_tags($params['value'], $conf['allowed_tags']);
     }
 

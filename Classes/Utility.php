@@ -53,6 +53,33 @@ class Utility	{
                 return LF;
         }
     }
+
+
+    /**
+     * Check the array and ensure the given keys do exist (to avoid mess with null-checking everything)
+     * Useful in methods where config array is passed (like Processors) 
+     * @param array $array Incoming array to check and set required keys
+     * @param array $keys Keys to check and set if not set. It can be a string (will set that key to null),
+     *      or a [mykey => somevalue] array, if you need other default than null  
+     * @return void
+     */
+    static public function nullCheckArrayKeys(array &$array, array $keys): void   {
+
+        foreach ($keys as $keyItem) {
+            if (is_array($keyItem)) {
+                $key = array_keys($keyItem)[0];
+                $defaultValue = $keyItem[$key];
+            }
+            else {
+                $key = $keyItem;
+                $defaultValue = null;
+            }
+
+            if (!isset($array[$key])) {
+                $array[$key] = $defaultValue;
+            }
+        }
+    }
 }
 
 

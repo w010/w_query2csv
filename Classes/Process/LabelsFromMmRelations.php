@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -52,12 +52,18 @@ class LabelsFromMmRelations implements ProcessorInterface	{
      * @return string
      */
     public function run(array $params, Core &$Core): string    {
-		$conf = $params['conf'];
+		$conf = $params['conf'] ?? [];
+        $row = $params['row'] ?? [];
+
+        Utility::nullCheckArrayKeys($params, ['value']);
+        Utility::nullCheckArrayKeys($conf, ['table', 'table_mm', 'field', 'delimiter', 'lineBreakType', 'additional_where']);
+        Utility::nullCheckArrayKeys($row, ['uid']);
+
 
         if (!$conf['table']  ||  !$conf['table_mm']  ||  !$conf['field'])
             return __METHOD__ . '() - NO TABLE OR TABLE_MM OR FIELD SPECIFIED!';
 
-        if (!$params['row']['uid'])
+        if (!$row['uid'])
             return __METHOD__ . '() - NO RECORD\'S uid PASSED! NOTE: To make processors with references work, uid must be selected (in "input.fields"), it can be removed from output using "remove_fields = uid"';
 
         $lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
@@ -73,7 +79,7 @@ class LabelsFromMmRelations implements ProcessorInterface	{
             . ' FROM ' . $conf['table'] . ' AS r '
             . ' JOIN ' . $conf['table_mm'] . ' AS m '
             . ' ON  r.uid = m.uid_local'
-            . ' WHERE m.uid_foreign = '.intval($params['row']['uid'])
+            . ' WHERE m.uid_foreign = '.intval($row['uid'])
             . ' ' . $conf['additional_where'];
         
         $Core->lastQuery[] = $query;
