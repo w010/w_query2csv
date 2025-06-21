@@ -18,7 +18,7 @@ for your preconfigured database queries dumped to customized CSV files. If you h
 sent to external CRM, where some raw values must be converted to something meaningful, like uids replaced with labels from relations, timestamps visualized, arrays deserialized,
 this extension is very useful. It\'s simple and easy to configure, but very flexible with input/output settings and scalability.',
 	'category' => 'plugin',
-	'version' => '0.7.0-dev',
+	'version' => '0.7.0',
 	'state' => 'stable',
 	'author' => 'A. wolo Wolski',
 	'author_email' => 'wolo.wolski@gmail.com',
