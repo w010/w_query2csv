@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2024 wolo '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -41,16 +41,19 @@ class StripHtml implements ProcessorInterface	{
 	/**
 	 * Performs regular expression replacement using preg_replace
 	 *
-	 * @param array $params: array|string 'allowed_tags' (string) - tags to keep (see strip_tags manual)
+	 * params[conf][allowed_tags] - (array|string) tags to keep (see strip_tags manual)
+	 *
+	 * @param array $params string 'value', array 'conf' (details above), array 'row', 
 	 * @param Core $Core
 	 * @return string
 	 */
     public function run(array $params, Core &$Core): string {
 		$conf = $params['conf'] ?? [];
-        Utility::nullCheckArrayKeys($conf, [['allowed_tags' => '']]);
-        Utility::nullCheckArrayKeys($params, ['value']);
+		$value = $params['value'] ?? '';
 
-	    return strip_tags($params['value'], $conf['allowed_tags']);
+        Utility::nullCheckArrayKeys($conf, [['allowed_tags' => '']]);
+
+	    return strip_tags($value, $conf['allowed_tags']);
     }
 
 }

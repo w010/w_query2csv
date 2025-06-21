@@ -1,8 +1,7 @@
 <?php
-defined('TYPO3_MODE')  OR  defined('TYPO3')  OR  die ('Access denied.');
+defined('TYPO3')  OR  die ('Access denied.');
 
-// todo: migrate to 'EXTENSIONS'
-$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
+$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['w_query2csv'] = [
     // list of tables, that can't be exported
     'not_allowed_tables' => 'be_users,be_groups,be_sessions,fe_users,fe_groups,fe_sessions,fe_session_data',
 ];
@@ -13,4 +12,13 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 	'_export',
 	'list_type',
 	0
+);
+
+
+// needed to avoid error 404
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'] = array_merge(
+    $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'],
+    [
+        'f', 'debug'
+    ]
 );

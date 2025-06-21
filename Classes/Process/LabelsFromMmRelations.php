@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -40,22 +40,24 @@ class LabelsFromMmRelations implements ProcessorInterface	{
 
 
     /**
-     * Generate string with label values from uid-commalist of records, like titles of referenced items
+     * Generate string with label values from mm-relations of records, like titles of referenced items
+     *
      * params[conf][table] - table name
+     * params[conf][table_mm] - intermediate table name
      * params[conf][field] - field to take the label from
      * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- or -SPACE-. default is comma+space (,-SPACE-)
      * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
      * params[conf][additional_where] - string - optional query where part (must start with AND)
      *
-     * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
+     * @param array $params string 'value', array 'conf' (details above), array 'row', string 'fieldname'
      * @param Core $Core
      * @return string
      */
     public function run(array $params, Core &$Core): string    {
 		$conf = $params['conf'] ?? [];
+        $value = $params['value'] ?? '';
         $row = $params['row'] ?? [];
 
-        Utility::nullCheckArrayKeys($params, ['value']);
         Utility::nullCheckArrayKeys($conf, ['table', 'table_mm', 'field', 'delimiter', 'lineBreakType', 'additional_where']);
         Utility::nullCheckArrayKeys($row, ['uid']);
 
@@ -66,7 +68,7 @@ class LabelsFromMmRelations implements ProcessorInterface	{
         if (!$row['uid'])
             return __METHOD__ . '() - NO RECORD\'S uid PASSED! NOTE: To make processors with references work, uid must be selected (in "input.fields"), it can be removed from output using "remove_fields = uid"';
 
-        $lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
+        $lineBreak = Utility::getLineBreak(''.$conf['lineBreakType']);
 
         if (!$conf['delimiter'])
             $conf['delimiter'] = ',-SPACE-';
@@ -85,7 +87,7 @@ class LabelsFromMmRelations implements ProcessorInterface	{
         $Core->lastQuery[] = $query;
         $preparedStatement = $Core->getDatabaseConnection()->query($query);
 
-        while(($row = $preparedStatement->fetchAssociative()) !== FALSE)   {
+        while(($row = $preparedStatement->fetch_assoc()) !== null)   {
             $labels[] = $row[ $conf['field'] ];
         }
 

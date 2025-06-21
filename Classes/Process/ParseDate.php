@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -41,15 +41,19 @@ class ParseDate implements ProcessorInterface	{
 	/**
 	 * Format date timestamp
 	 *
-	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
+	 * @param array $params string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf', array 'row', string 'fieldname'
 	 * @param Core $Core
 	 * @return string - parsed date
 	 */
 	public function run(array $params, Core &$Core): string    {
-		$conf = $params['conf'];
+		$conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
+
+		Utility::nullCheckArrayKeys($conf, ['format']);
+
 		if (!$conf['format'])
 			$conf['format'] = 'Y.m.d H:i';
-		return date($conf['format'], intval($params['value']));
+		return date($conf['format'], intval($value));
 	}
 
 }

@@ -2,30 +2,14 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
-*  This script is part of the TYPO3 project. The TYPO3 project is
-*  free software; you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 2 of the License, or
-*  (at your option) any later version.
-*
-*  The GNU General Public License can be found at
-*  http://www.gnu.org/copyleft/gpl.html.
-*
-*  This script is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
 namespace WoloPl\WQuery2csv;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\Expression\ExpressionBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -44,25 +28,25 @@ class Core	{
     *
     * @var array
     */
-	public $file_config = [];
+	public array $file_config = [];
 
 	/**
 	* Stored queries
 	*
 	* @var array
 	*/
-	public $lastQuery = [];
+	public array $lastQuery = [];
 
 
 	/**
-	 * @var object parent instance
+	 * @var object|null parent instance
 	 */
-	public $pObj = null;
+	public ?object $pObj = null;
 
 	/**
-	 * @var ContentObjectRenderer
-	 */
-	public $cObj = null;
+	 * @var ContentObjectRenderer|null
+     */
+	public ?ContentObjectRenderer $cObj = null;
 
 
 
@@ -90,7 +74,7 @@ class Core	{
         }
 
         // for security reasons, don't allow to export tables like fe/be users
-        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']['not_allowed_tables'], $this->file_config['input.']['table'] ?? ''))   {
+        if (GeneralUtility::inList($GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['w_query2csv']['not_allowed_tables'], $this->file_config['input.']['table'] ?? ''))   {
             die ('table not allowed.');
         }
     }
@@ -149,7 +133,7 @@ class Core	{
 
         // main iteration
         if ($preparedStatement)   {
-            while(($row_db = $preparedStatement->fetchAssociative()) !== FALSE)   {
+            while(($row_db = $preparedStatement->fetch_assoc()) !== null)   {
 
 	            // make sure that $fields array is empty and ready for new row data
 	            $fields = [];
@@ -202,7 +186,7 @@ class Core	{
                     // if we want to add the unserialized array to the csv as new columns (merge with current fields) we need it as an array.
                     // the Unserialize processor handles this by itself - with mergeAsColumns=1 it automatically returns json
                     if (isset($output['process_fields.'][$field.'.']['mergeAsColumns']) && $output['process_fields.'][$field.'.']['mergeAsColumns'])    {
-                        $mergeColumns = \GuzzleHttp\json_decode($value,true);
+                        $mergeColumns = \GuzzleHttp\Utils::jsonDecode($value,true);
                         if (is_array($mergeColumns)) {
                             $fields = array_merge($fields, $mergeColumns);
                         }
@@ -344,11 +328,10 @@ class Core	{
      * Reads data from database with given config
      *
      * @param array $input
-     * @return \Doctrine\DBAL\Driver\Result
-     * @throws \Doctrine\DBAL\Driver\Exception
+     * @return \mysqli_result
      * @throws \Doctrine\DBAL\Exception
      */
-    private function _readData(array $input): \Doctrine\DBAL\Driver\Result {
+    protected function _readData(array $input): \mysqli_result {
 
         // File based query (sql template)
         if ($input['sql_file']) {
@@ -371,19 +354,29 @@ class Core	{
         	if ($input['where_wrap.'])
 	        	$input['where'] = $this->cObj->cObjGetSingle($input['where_wrap'], $input['where_wrap.']);
 
+            $restrictionsExpression_sql = '';
         	if ($input['enableFields']) {
                 $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($input['table']);
                 $restrictions = $queryBuilder->getRestrictions();
-                $ExpressionBuilder = GeneralUtility::makeInstance(ExpressionBuilder::class,
-                    GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionByName('Default'));
+                $ExpressionBuilder = $queryBuilder->expr(); // better than instantiating manually
                 $restrictionsExpression = $restrictions->buildExpression([$input['table'] => $input['table']], $ExpressionBuilder);
+
+                // inject into a dummy query to extract SQL "where" restrictions as a text
+                $sqlDummy = $queryBuilder->select('1')
+                    ->from($input['table'])
+                    ->where($restrictionsExpression)
+                    ->getSQL();
+                // fetch the WHERE part only
+                $restrictionsExpression_sql = explode(' WHERE ', $sqlDummy)[1] ?? '';
             }
+
+
 
         	$query = 'SELECT ' . $input['fields']
                 . ' FROM ' . $input['table']
-                . ' WHERE ' . ($input['where'] ? $input['where'] : '1=1')
+                . ' WHERE ' . ($input['where'] ?: '1=1')
                     . ($input['default_enableColumns'] ? ' AND NOT deleted AND NOT hidden'
-                        : ($input['enableFields'] && $restrictionsExpression ? ' AND ' . $restrictionsExpression
+                        : ($input['enableFields'] && $restrictionsExpression_sql ? ' AND ' . $restrictionsExpression_sql
                             : ''))
                 . ($input['group'] ? ' GROUP BY ' . $input['group'] : '')
                 . ($input['order'] ? ' ORDER BY ' . $input['order'] : '')
@@ -399,11 +392,12 @@ class Core	{
     /**
      * Returns the database connection
      *
-     * @return \Doctrine\DBAL\Driver\Connection
+     * @return \mysqli
+     * @throws \Doctrine\DBAL\Exception
      */
-    public function getDatabaseConnection(): \Doctrine\DBAL\Driver\Connection {
+    public function getDatabaseConnection(): \mysqli {
         $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-		return $pool->getConnectionByName('Default')->getWrappedConnection();
+		return $pool->getConnectionByName('Default')->getNativeConnection();
     }
 }
 

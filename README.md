@@ -5,7 +5,7 @@ readme / manual
 
 
 wolo '.' studio
-2009 - 2024
+2009 - 2025
 wolo.wolski (at) gmail (dot) com
 
 
@@ -338,6 +338,17 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 ### 4.4 Processors reference:
 ```
+	PhpEval - Pass through any PHP callable function, method, etc.
+		config:
+			.callable = [string] - callable name, ie: 'str_to_upper'
+			.args	{
+				# optional additional arguments to pass to the function (after the value, which goes as first) 
+				argument = value
+
+				# array keys here may be string or int:
+				#  - if strings - then it must match argument var name, order is ignored  
+				#  - if int - then number can be any, but it must follow the exact order or passing  
+			}
 
 
 	ParseDate - Converts timestamp to human-readable date, parsed using date() function
@@ -368,7 +379,7 @@ _See more examples in Configuration/TypoScript/setup.ts_
 
 	StripHtml - Remove HTML markup from text
 		config:
-			.allowed_tags = [string] optional, list of tags to keep
+			.allowed_tags = [array|string] optional, list of tags to keep
 
 
 	Unserialize - Unserializes an array and generates key: value pairs separated by given delimiter
@@ -407,22 +418,45 @@ In its config you define other processors, in standard way, any order you need:
 
 ```
 
-	Chain - set of many processors 
+	Chain - sequence of many processors, run on single field
+	
+	It can do either: - further process result of previous one,
+					  - or join chain results into one long value
 		
 	config:
+		.mode = [string] - "join" or "replace" (default), the chain behaviour - stick all chain items outputs together, or each next will process and replace previous result
+		.delimiter [string] - in mode=join that will be used to glue the results together. keywords may be used: -SPACE-, -LINEBREAK-. default is '-SPACE-'. (can be reset with "delimiter = ")
+		.lineBreakType [string] - -LINEBREAK-s will be of type: 'LF' (default) 'CR' or 'CRLF'
 		.chain {
 			index = [callable_process_method] (typo3 native way, preferable modern namespace call, but may be classic file:class->method reference, anything allowed by GeneralUtility::callUserFunction
 			index.someOption = someValue
 			The same way, as you define _process_fields_ (see above)
-			Example:
-				chain	{
+
+			Example (default mode - replace):
+				....
+				.chain	{
 					10 = WoloPl\WQuery2csv\Process\StaticValue
 					10.value = TEST_abc_YYYY
+
 					20 = WoloPl\WQuery2csv\Process\PregReplace
 					20.pattern = /abc/
 					20.replacement = 111
 				}
-			@SEE reference above
+
+			Example with JOIN mode (adds static text, then db value, separates with linebreak) 
+				pid = WoloPl\WQuery2csv\Process\Chain
+				pid.mode = join 
+				pid.delimiter = -LINEBREAK-
+				pid.chain {
+					10 = WoloPl\WQuery2csv\Process\StaticValue
+					10.value = PAGE:
+
+					# LabelsFromRecords
+					20 = WoloPl\WQuery2csv\Process\LabelsFromRecords
+					20.table = pages
+					20.field = title
+				}
+
 		}
 
 ```
@@ -495,7 +529,7 @@ What if be user edit has template edit priviliges and exports something that he 
 Some tables would never be accessed even by other backend users. To prevent situation when a user configure plugin to see ie. users passwords,
 or allow a table which is originally blocked, set selected tables as comma separated list on "not_allowed_tables", in LocalConfiguration or AdditionalConfiguration
 ```
-$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
+$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['w_query2csv'] = [
 	'not_allowed_tables' => 'be_users,be_groups,be_sessions,fe_users,fe_groups,fe_sessions,fe_session_data',
 ];
 ```
@@ -504,13 +538,22 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 ## 7. Migrate
 
 * from version 0.6.x
-	- Core::config property was renamed to Core::file_config, so if you have your own processors (or xclasses),
-	  you may want to check if they used this property. This doesn't impact installations which uses only built-in features.
-	  Also, property Core::lastQuery was changed from type string to array (so it may collect also additional queries from processors)
+    - `Core::getDatabaseConnection()` in typo 13 that now returns `\mysqli` object, instead of `\Doctrine\DBAL\Driver\Connection`
+        You may need to update your custom Processors, for example: ~~$row = $preparedStatement->fetchAssociative()) !== FALSE~~
+        - NOW must be this way: `$row = $preparedStatement->fetch_assoc()) !== null` (don't ask me why it's changed again)
+    - 'not_allowed_tables' conf option - (previously under `...['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv']`
+      - NOW: `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['w_query2csv']['not_allowed_tables']'`
+
+
+* from version 0.6.0
+    - `Core::config` property was renamed to `Core::file_config` in 0.6.1, so if you have your own processors (or xclasses),
+      you may want to check if they used this property. This doesn't impact installations which uses only built-in features.
+      Also, property Core::lastQuery was changed from type string to array (so it may collect also additional queries from processors)
+
 
 * from version 0.5.x
-	- process_fields: deprecated class Process is finally removed, so processing config like: ~~WoloPl\WQuery2csv\Process->\[processingMethod]~~
-	  doesn't work anymore. change to: ``WoloPl\WQuery2csv\Process\[ProcessingClass]`` (@see output.process_fields and ref in point 4.4)
+    - process_fields: deprecated class Process is finally removed, so processing config like: ~~WoloPl\WQuery2csv\Process->\[processingMethod]~~
+      doesn't work anymore. change to: ``WoloPl\WQuery2csv\Process\[ProcessingClass]`` (@see output.process_fields and ref in point 4.4)
 
 
 * from version 0.3.x
@@ -546,6 +589,13 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 
 ## 9. ChangeLog
 
+##### 0.7.0
+- 13.x compatibility (v12 had to be dropped)
+- Packagist publish - fully Composer installable 
+- new processor: PhpEval (simply pass value through any php callable/function)
+- feat: processor Chain: now with mode=join the sequence can also be used to build one long value, instead of reprocessing previous one's result
+- php 8 syntax fixes/null-check (log warnings flooding)
+
 ##### 0.6.8
 - new processor: Chain (runs multiple processor for a field)
 - new processor: StripHtml
@@ -555,7 +605,6 @@ $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['w_query2csv'] = [
 - fix: database integration (fetch query)
 - bugfix: processor LabelsFromMmRelations: now builds correct mm join query
 - bugfix: processor LabelsFromRecords: query build bug
-
 
 ##### 0.6.7
 - 12.x compatibility

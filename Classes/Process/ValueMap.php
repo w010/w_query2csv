@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -41,17 +41,23 @@ class ValueMap implements ProcessorInterface	{
 	/**
 	 * Replace with predefined value from given map array. If not found, return original
 	 *
-	 * @param array $params: array 'map' - [oldValue = New Value] pairs
+	 * params[conf][map.] - (array) [oldValue = New Value] pairs
+	 * 
+	 * @param array $params string 'value', array 'conf' (details above), array 'row' 
 	 * @param Core $Core
 	 * @return string
 	 */
-    public function run(array $params, Core &$Core): string {
-		$conf = $params['conf'];
-	    if (!$conf['map.'])
-		    $conf['map.'] = [];
-	    if ($conf['map.'][ $params['value'] ])
-	    	return (string) $conf['map.'][ $params['value'] ];
-	    return (string) $params['value'];
-    }
+	public function run(array $params, Core &$Core): string {
+		$conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
+
+		Utility::nullCheckArrayKeys($conf, [['map.' => []]]);
+
+		if (!$conf['map.'])
+			$conf['map.'] = [];
+		if ($conf['map.'][ $value ])
+			return (string) $conf['map.'][ $value ];
+		return (string) $value;
+	}
 
 }

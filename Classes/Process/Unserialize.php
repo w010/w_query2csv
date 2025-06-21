@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -40,28 +40,34 @@ class Unserialize implements ProcessorInterface	{
 
 	/**
 	 * Unserialize value
-     * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- (default) or -SPACE-
-     * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
+	 * 
+	 * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- (default) or -SPACE-
+	 * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
+	 * params[conf][returnJson] - bool - json decode
+	 * params[conf][mergeAsColumns] - bool - inserts the unserialized array items as new columns to csv output (also forces returnJson)
 	 *
-	 * @param array $params: 'value' - serialized string, 'conf' array with 'delimiter'
+	 * @param array $params 'value' - serialized string, 'conf' array with 'delimiter'
 	 * @param Core $Core
 	 * @return string
 	 */
 	public function run(array $params, Core &$Core): string    {
-		$conf = $params['conf'];
+		$conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
 
-		$lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
+		Utility::nullCheckArrayKeys($conf, ['delimiter', 'lineBreakType', 'returnJson', 'mergeAsColumns']);
+
+		$lineBreak = Utility::getLineBreak(''.$conf['lineBreakType']);
 
 		if (!$conf['delimiter'])
 			$conf['delimiter'] = '-LINEBREAK-';
 
         $conf['delimiter'] = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $conf['delimiter']);
 
-        $array = unserialize($params['value']);
+        $array = unserialize($value) ?? [];
 
         // for mergeAsColumns we need the whole unserialized array, but this method always returns string, so use json as well 
         if ($conf['returnJson'] || $conf['mergeAsColumns']) {
-            return \GuzzleHttp\json_encode($array);
+            return \GuzzleHttp\Utils::jsonDecode($array);
         }
 
 	    $out = '';

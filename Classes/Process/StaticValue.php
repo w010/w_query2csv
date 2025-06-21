@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -41,12 +41,17 @@ class StaticValue implements ProcessorInterface	{
 	/**
 	 * Set static value given in 'value' key of params array
 	 *
-	 * @param array $params: string 'value', array 'conf', array 'row', string 'fieldname'
+	 * params[conf][value] - (string) text to replace the original with
+	 *
+	 * @param array $params string 'value', array 'conf', array 'row', string 'fieldname'
 	 * @param Core $Core
 	 * @return string
 	 */
 	public function run(array $params, Core &$Core): string {
-		return (string) $params['conf']['value'];
+		$conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? ''; // the original
+
+		return (string) $conf['value'] ?? '';
 	}
 
 }

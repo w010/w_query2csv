@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2024 wolo '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -26,11 +26,11 @@ namespace WoloPl\WQuery2csv\Process;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
- * Process value: Chain launch many processors
+ * Process value: Chain-launch many processors, replacing or joining values
  *
  * @author	Wolo <wolo.wolski@gmail.com>
  * @package	TYPO3
@@ -40,35 +40,65 @@ class Chain implements ProcessorInterface	{
 
 
 	/**
-	 * launch
+	 * Launch a sequence of processors
+     * 
+     * params[conf][chain.] - (array) sub-processors sequence configuration 
+     * params[conf][mode] - (string) each process result can: "join", or default = "replace" the previous chain item result value
+     * params[conf][delimiter] - (string) when the results are joined in one, they will be glued with that string (can be -LINEBREAK- or -SPACE-. default is -SPACE-. pass empty string to stick together)
+     * params[conf][lineBreakType] - (string) - when -LINEBREAK- is used, can be set to linebreak type - LF (default), CR, CRLF
 	 *
-	 * @param array $params: array 'chain'
+	 * @param array $params string 'value', array 'conf' (details above), array 'row' 
 	 * @param Core $Core
 	 * @return string
 	 */
 	public function run(array $params, Core &$Core): string {
-        $value = $params['value'];
-        foreach ($params['conf']['chain.'] as $chain_index => $chain_process_method)   {
+        $conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
+        $row = $params['row'] ?? [];
+
+        Utility::nullCheckArrayKeys($conf, [['chain.' => []], 'mode', ['delimiter' => '-SPACE-'], 'lineBreakType']); // delimiter default is set here to make possible to configure empty string override that space
+
+        $lineBreak = Utility::getLineBreak(''.$conf['lineBreakType']);
+        $join_glue = str_replace(['-LINEBREAK-', '-SPACE-'], [$lineBreak, ' '], $conf['delimiter']);
+
+        $result = $value;
+        $results_collected = [];
+
+        foreach ($conf['chain.'] as $chain_index => $chain_process_method)   {
             if (intval($chain_index) !== $chain_index)  // skip "10." array items!
                 continue;
             if ($chain_process_method) {
-                $process_conf = $params['conf']['chain.'][$chain_index.'.'];
-                
-                
+                $process_conf = $conf['chain.'][$chain_index.'.'] ?? [];
+
+
                 $chain_process_params = [
-                    'value' => $value,
-                    'row' => $params['row'],
+                    'value' => $result,
+                    'row' => $row,
                     'conf' => $process_conf,
-                    'fieldName' => $params['fieldName']
+                    'fieldName' => $params['fieldName'] ?? '',
                 ];
                 if (!strstr($chain_process_method, '->')) {
                     // method not specified
                     $chain_process_method .= '->run';
                 }
-                $value = GeneralUtility::callUserFunction($chain_process_method, $chain_process_params, $Core);
+
+                // in mode = "join" chain processors adds their result to the end of previous one
+                // (but the original value is first removed, though)
+                if ($conf['mode'] == 'join') {
+                    $results_collected[] = GeneralUtility::callUserFunction($chain_process_method, $chain_process_params, $Core);
+                }
+                // default mode = "replace" - the processed value replaces original 
+                else    {
+                    $result = GeneralUtility::callUserFunction($chain_process_method, $chain_process_params, $Core);
+                }
             }
         }
-        return $value;
+
+        if ($conf['mode'] == 'join') {
+            return implode($join_glue, $results_collected);
+        }
+
+        return $result;
 	}
 
 }

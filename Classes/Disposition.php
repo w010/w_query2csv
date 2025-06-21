@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -40,9 +40,9 @@ class Disposition   {
     /**
      * Send headers and file to the client
      *
-     * @param string $csv : file content
-     * @param array $outputConfig : output part of file configuration coming from ts
-     * @param array $additionalConfig : additional optional settings
+     * @param string $csv file content
+     * @param array $outputConfig output part of file configuration coming from ts
+     * @param array $additionalConfig additional optional settings
      * @return void
      */
 	public function sendFile(string $csv, array $outputConfig, array $additionalConfig = []): void	{

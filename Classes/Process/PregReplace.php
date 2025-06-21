@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -41,18 +41,26 @@ class PregReplace implements ProcessorInterface	{
 	/**
 	 * Performs regular expression replacement using preg_replace
 	 *
-	 * @param array $params: array 'pattern' (string) - regexp pattern, 'replacement' (string) - replacement, 'limit' (int) - max replacements (see preg_replace manual)
+	 * params[conf][pattern] - (string) - regexp pattern
+	 * params[conf][replacement] - (string) - replacement
+	 * params[conf][limit] - (int) - max replacements (see preg_replace manual)
+	 * 
+	 * @param array $params string 'value', array 'conf' (details above), array 'row' 
 	 * @param Core $Core
 	 * @return string
 	 */
     public function run(array $params, Core &$Core): string {
-		$conf = $params['conf'];
+        $conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
+
+		Utility::nullCheckArrayKeys($conf, ['pattern', 'replacement', 'limit']);
+
 	    if (!$conf['pattern'])
-	        return (string) $params['value'];
+	        return (string) $value;
 
         $conf['replacement'] = str_replace(['-SPACE-'], [' '], $conf['replacement']);
 
-	    return (string) preg_replace($conf['pattern'], $conf['replacement'], $params['value'], $conf['limit'] ?? -1);
+	    return (string) preg_replace($conf['pattern'], $conf['replacement'], $value, $conf['limit'] ?: -1);
     }
 
 }

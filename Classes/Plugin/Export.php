@@ -2,28 +2,15 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2021 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
-*  This script is part of the TYPO3 project. The TYPO3 project is
-*  free software; you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 2 of the License, or
-*  (at your option) any later version.
-*
-*  The GNU General Public License can be found at
-*  http://www.gnu.org/copyleft/gpl.html.
-*
-*  This script is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
 
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 
 /**
@@ -33,41 +20,67 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * @package	TYPO3
  * @subpackage	tx_wquery2csv
  */
-class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
-	var $prefixId      = 'tx_wquery2csv_export';		// Same as class name
-	var $scriptRelPath = 'Classes/Plugins/Export.php';	// Path to this script relative to the extension dir.
-	var $extKey        = 'w_query2csv';	// The extension key.
+class tx_wquery2csv_export  {
 
-    public $conf = [];
+    /**
+     * The back-reference to the mother cObj object set at call time
+     */
+    public ContentObjectRenderer $cObj;
+
+    /**
+     * This setter is called when the plugin is called from UserContentObject (USER)
+     * via ContentObjectRenderer->callUserFunction().
+     *
+     * @param ContentObjectRenderer $cObj
+     */
+    public function setContentObjectRenderer(ContentObjectRenderer $cObj): void {
+        $this->cObj = $cObj;
+    }
+
+    protected string $prefixId = 'tx_wquery2csv_export';		// not necessary anymore, I only use it for information somewhere
+    protected string $extKey = 'w_query2csv';
+
+    public array $conf = [];
+
+    /**
+     * @var ServerRequestInterface
+     */
+    protected ServerRequestInterface $request;
 
     /**
      * File configuration
      *
      * @var array
      */
-    protected $file_config = [];
+    protected array $file_config = [];
 
     /**
      * File config key
      *
      * @var string
      */
-    protected $file_key = '';
+    protected string $file_key = '';
 
 
 	/**
 	 * The main method of the plugin - prints output and exits
 	 *
-	 * @param	string		$content: The PlugIn content
-	 * @param	array		$conf: The PlugIn configuration
+	 * @param	string		$content The PlugIn content
+	 * @param	array		$conf The PlugIn configuration
 	 * @return  string
 	 */
-	function main(string $content, array $conf): string	{
+	function main(
+            string $content,
+            array $conf,
+            ServerRequestInterface $request
+    ): string	{
 		$this->conf = $conf;
-		$this->pi_setPiVarDefaults();
+		$this->request = $request;
 
 
-        $this->file_key = GeneralUtility::_GP('f');
+        // that works only if 'f' is added to '[cacheHash][excludedParameters]' - see ext_localconf. otherwise will show 404
+        $this->file_key = $this->request->getParsedBody()['f'] ?? $this->request->getQueryParams()['f'] ?? '';
+
 
         // set config
         $this->_setFileConfig();
@@ -128,9 +141,10 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
     /**
      * @return bool
      */
-	protected function isDebugEnabled()  {
-	    return (GeneralUtility::_GP('debug')  &&  isset($this->conf['debug_allowed'])  &&  $this->conf['debug_allowed'])
-			||  (GeneralUtility::_GP('debug')  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment());
+	protected function isDebugEnabled(): bool {
+        $debug_mode = $this->request->getParsedBody()['debug'] ?? $this->request->getQueryParams()['debug'] ?? '';
+	    return ($debug_mode  &&  ($this->conf['debug_allowed'] ?? false)
+			||  ($debug_mode  &&  \TYPO3\CMS\Core\Core\Environment::getContext()->isDevelopment()));
     }
 
 
@@ -141,21 +155,20 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
     private function _setFileConfig()   {
 
     	if ($this->file_key) {
-		    $this->file_config = $this->conf['files.'][$this->file_key . '.'];
+		    $this->file_config = $this->conf['files.'][$this->file_key . '.'] ?? [];
 		    if ($this->file_key === '_default')
 		    	return;
 	    }
 	    else    {
-	        if (!$this->file_key) {
-	            if ($this->conf['default_config_if_missed'] ?? 0)    {
-				    $this->_setDefaultConfig();
-			    }
-			    else    {
-		            // if no key and default is disabled
-				    return;
-			        //Throw new Exception('<b>Error:</b> No file key given!');
-			    }
-	        }
+	        
+            if ($this->conf['default_config_if_missed'] ?? 0)    {
+                $this->_setDefaultConfig();
+            }
+            else    {
+                // if no key and default is disabled
+                return;
+                //Throw new Exception('<b>Error:</b> No file key given!');
+            }
 	    }
 
 	    // if no key config and defaults not allowed
@@ -174,7 +187,7 @@ class tx_wquery2csv_export extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
      * Sets default config if not given in typoscript.
      * In some cases you might need to modify the code and adjust this to your needs
      */
-    private function _setDefaultConfig(): array    {
+    private function _setDefaultConfig()    {
 
         // check if _default key is configured in TS
         $this->file_key = '_default';

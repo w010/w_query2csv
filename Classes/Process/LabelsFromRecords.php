@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2009-2018 wolo.pl '.' studio <wolo.wolski@gmail.com>
+*  (c) 2009-2025 wolo '.' studio <wolo.wolski@gmail.com>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
 namespace WoloPl\WQuery2csv\Process;
 
 use WoloPl\WQuery2csv\Core;
-
+use WoloPl\WQuery2csv\Utility;
 
 
 /**
@@ -40,27 +40,32 @@ class LabelsFromRecords implements ProcessorInterface	{
 
 	/**
 	 * Generate string with label values from uid-commalist of records, like titles of referenced items
+	 *
 	 * params[conf][table] - table name
 	 * params[conf][field] - field to take the label from
+	 * params[conf][additional_where] - query part
 	 * params[conf][delimiter] - separate labels in result. you can use here: -LINEBREAK- or -SPACE-. default is comma+space (,-SPACE-)
 	 * params[conf][lineBreakType] - string - linebreak type, may be LF (default), CR, CRLF
 	 * params[conf][useValueFromField] - string - instead of current field's value, use another column from current row
 	 *
-	 * @param array $params: string 'value' - timestamp (given in ts, so it's string casted to integer), array 'conf' (details above), array 'row', string 'fieldname'
+	 * @param array $params string 'value', array 'conf' (details above), array 'row', string 'fieldname'
 	 * @param Core $Core
 	 * @return string
 	 */
 	public function run(array $params, Core &$Core): string    {
-		$conf = $params['conf'];
-		$value = $params['value'];
+		$conf = $params['conf'] ?? [];
+		$value = $params['value'] ?? '';
+		$row = $params['row'] ?? [];
+
+		Utility::nullCheckArrayKeys($conf, ['table', 'field', 'additional_where', 'delimiter', 'lineBreakType', 'useValueFromField']);
 
 		if (!$conf['table']  ||  !$conf['field'])
 			return __METHOD__ . '() - NO TABLE OR FIELD SPECIFIED!';
 
 		if ($conf['useValueFromField'])
-		    $value = $params['row'][ $conf['useValueFromField'] ];
+		    $value = $row[ $conf['useValueFromField'] ] ?? '';
 
-		$lineBreak = \WoloPl\WQuery2csv\Utility::getLineBreak(''.$conf['lineBreakType']);
+		$lineBreak = Utility::getLineBreak(''.$conf['lineBreakType']);
 
 		if (!$conf['delimiter'])
 			$conf['delimiter'] = ',-SPACE-';
@@ -73,12 +78,12 @@ class LabelsFromRecords implements ProcessorInterface	{
             . ' FROM ' . $conf['table']
             . ' WHERE uid IN (' . implode(',', array_map('intval', explode(',', $value))) . ')'
             . ' ' . $conf['additional_where'];
-        
-        $preparedStatement = $Core->getDatabaseConnection()->query($query);
-        $Core->lastQuery[] = $query;
 
-        while(($row = $preparedStatement->fetchAssociative()) !== FALSE)   {
-			$labels[] = $row[ $conf['field'] ];
+        $Core->lastQuery[] = $query;
+        $preparedStatement = $Core->getDatabaseConnection()->query($query);
+
+        while(($row = $preparedStatement->fetch_assoc()) !== null)   {
+			$labels[] = $row[ $conf['field'] ] ?? '';
 		}
 
 		return implode($conf['delimiter'], $labels);

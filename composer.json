@@ -4,16 +4,13 @@
    "description": "Export database/query to CSV",
    "license": "GPL-2.0-or-later",
    "require": {
-      "typo3/cms-core": "^12.4"
+      "typo3/cms-core": "^13.4"
    },
    "autoload": {
       "psr-4": {
          "WoloPl\\WQuery2csv\\": "Classes/"
       },
       "classmap": ["Classes/Plugin/Export.php"]
-   },
-   "replace": {
-      "w_query2csv": "self.version"
    },
    "extra": {
       "typo3/cms": {
